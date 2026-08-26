@@ -16,7 +16,17 @@ Stanford CS329A "Self-Improving AI Agents"（斯坦福大学 2025 秋季研讨�
 | `learning-records/` | 学习记录（先验知识评估） |
 | `MISSION.md` | 学习使命与目标 |
 | `NOTES.md` | 教学偏好与工作笔记 |
-| `RESOURCES.md` | 课程、综述、关键论文资源清单 |
+## 安装 teach skill
+
+本仓库学习流程配合 [mattpocock/skills](https://github.com/mattpocock/skills) 中的 `teach` skill 使用，用于概念讲解与即时反馈练习。安装：
+
+```bash
+npx skills add mattpocock/skills
+```
+
+安装完成后，在支持 skills 的 agent 中即可调用 `teach` skill 进行交互式学习。
+
+## 9 讲主题
 
 ## 9 讲主题
 
