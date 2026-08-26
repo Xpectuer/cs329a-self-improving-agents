@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自进化 Agent 词汇表</title>
+<link rel="stylesheet" href="../assets/shared.css">
+</head>
+<body>
+<main>
+<h1>自进化 Agent 词汇表</h1>
+<p class="meta">教学工作区的领域语言基线 · 随课程扩充 · 打印友好</p>
+<p class="lead">本表是「自进化 agent」领域在本工作区内的标准用语。所有课程与练习都遵循这里的定义与「避免使用」的别名约定。</p>
+
+<h2>核心概念</h2>
+
+<p><strong>自进化 agent（self-improving / self-evolving agent）</strong>：
+通过与自身经验、反馈和环境的闭环交互，持续提升自身能力的智能体。
+<em>Avoid</em>：自我进化（口语化）、自学 agent（混淆于普通机器学习）。</p>
+
+<p><strong>自进化闭环（self-improvement loop）</strong>：
+「生成 → 验证 → 反馈 → 更新」的循环，是 CS329A 全课的统一主线。
+<em>Avoid</em>：进化循环、改进回路。</p>
+
+<p><strong>生成-验证差距（generation-verification gap）</strong>：
+模型生成候选的能力强于可靠验证候选的能力，导致「会做但不会判」的差距；它是测试时扩展与训练时扩展共同的瓶颈。
+<em>Avoid</em>：生成验证鸿沟。</p>
+
+<p><strong>演化位点（evolution locus）</strong>：
+自进化可以作用的组件位置——模型参数、上下文/记忆、工具/技能、架构/工作流。
+<em>Avoid</em>：进化位置、改进对象。</p>
+
+<p><strong>测试时扩展（test-time compute scaling）</strong>：
+不改变模型权重，在推理阶段投入更多计算（重复采样、搜索、反思）以提升输出质量。
+<em>Avoid</em>：推理时扩展（与「测试间学习」混用）。</p>
+
+<p><strong>训练时扩展（train-time scaling / scaling RL）</strong>：
+在训练阶段通过强化学习等闭环反馈更新模型权重以提升能力。
+<em>Avoid</em>：训练扩展定律（那是另一回事）。</p>
+
+<p><strong>测试间学习（inter-test-time learning）</strong>：
+在两个任务之间发生的持久更新（如用收集的轨迹微调），区别于任务内的临时适应。
+<em>Avoid</em>：跨任务学习（模糊）。</p>
+
+<h2>验证与评估</h2>
+
+<p><strong>验证器（verifier）</strong>：
+对候选输出打分或判定正误的组件——规则检查器、奖励模型、LLM 裁判等。
+<em>Avoid</em>：校验器、审核器。</p>
+
+<p><strong>奖励模型（reward model, RM）</strong>：
+给模型输出打分的模型，为强化学习提供标量奖励信号。</p>
+
+<p><strong>结果奖励模型（ORM, outcome reward model）</strong>：
+对最终结果整体打分的奖励模型。
+<em>Avoid</em>：结果监督模型。</p>
+
+<p><strong>过程奖励模型（PRM, process reward model）</strong>：
+对推理/求解的中间步骤逐一打分的奖励模型，粒度更细。
+<em>Avoid</em>：过程监督模型。</p>
+
+<p><strong>pass@k</strong>：
+生成 k 个候选、其中至少一个正确的概率；衡量生成能力上限。
+<em>Avoid</em>：通过率（丢掉了 k 的含义）。</p>
+
+<p><strong>10@k</strong>：
+从 k 个候选中只能提交 10 个时（经筛选/聚类后）的评测指标；衡量筛选与聚类能力。
+<em>Avoid</em>：top-10 提交率。</p>
+
+<p><strong>best-of-n</strong>：
+生成 n 个候选，由验证器评分选出最优的测试时扩展策略。
+<em>Avoid</em>：n 选一（不体现验证器）。</p>
+
+<p><strong>RLVR（reinforcement learning with verifiable rewards）</strong>：
+奖励信号来自可自动验证的规则（数学答案、单元测试等）的强化学习范式，是 DeepSeekMath / DAPO 的奖励基础。
+<em>Avoid</em>：可验证奖励 RL（啰嗦）。</p>
+
+<h2>代表方法</h2>
+
+<p><strong>STaR（Self-Taught Reasoner）</strong>：
+自生成推理链、筛选出正确者、迭代微调模型的自我改进方法。
+<em>Avoid</em>：自学推理器（字面翻译）。</p>
+
+<p><strong>GRPO（Group Relative Policy Optimization）</strong>：
+以组内样本的相对优势作为策略更新信号的强化学习算法，省去 Critic 模型。
+<em>Avoid</em>：组相对策略优化（仅在正式场合用全称）。</p>
+
+<p><strong>反思（reflection）</strong>：
+智能体对自身输出进行批判性评估并修订的行为，常作为任务内（测试时）适应机制。
+<em>Avoid</em>：自我反省（心理学含义干扰）。</p>
+
+<p><strong>技能库（skill library）</strong>：
+可复用、程序化的技能集合，随经验增补（如 Voyager 在 Minecraft 中沉淀的技能代码）。
+<em>Avoid</em>：技能包、工具库（工具库是静态的）。</p>
+
+<hr>
+<p class="sidenote">术语来源：CS329A 课程与 wiki 知识页（<a href="../wiki/index.md">wiki/index.md</a>）、Gao et al. 2025 综述（<a href="https://arxiv.org/abs/2507.21046">arXiv:2507.21046</a>）。本表随课程推进修订。</p>
+</main>
+</body>
+</html>

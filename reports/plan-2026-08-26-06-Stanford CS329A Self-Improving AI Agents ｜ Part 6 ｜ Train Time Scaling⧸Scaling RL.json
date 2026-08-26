@@ -1,0 +1,61 @@
+{
+  "source_file": "06-Stanford CS329A Self-Improving AI Agents ｜ Part 6 ｜ Train Time Scaling⧸Scaling RL.txt",
+  "total_chars": 66459,
+  "chapters": [
+    {
+      "id": "ch-01",
+      "title": "引言：训练时扩展（Train-Time Scaling）",
+      "order": 1,
+      "heading_pattern": "Welcome, everyone|Today's lecture, we will actually cover three papers",
+      "depends_on": [],
+      "summary": "介绍训练时扩展的核心思想：通过筛选模型自身输出并用于再训练，用训练期计算弥补参数规模不足，形成自我改进的闭环。"
+    },
+    {
+      "id": "ch-02",
+      "title": "论文一：STaR（Self-Taught Reasoner）",
+      "order": 2,
+      "heading_pattern": "The first paper will cover|This paper is called STaR",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "介绍 STaR 方法，通过在问题中注入并筛选正确的推理过程（rationales），提升模型的推理能力。"
+    },
+    {
+      "id": "ch-03",
+      "title": "论文二：DeepSeekMath（数学推理增强）",
+      "order": 3,
+      "heading_pattern": "The second paper we will cover|DeepSeek math",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "介绍 DeepSeekMath，展示如何通过数学语料与训练时扩展技术，让较小的语言模型在数学推理基准上获得显著提升。"
+    },
+    {
+      "id": "ch-04",
+      "title": "论文三：DAPO（长链推理的强化学习稳定化）",
+      "order": 4,
+      "heading_pattern": "The third paper is more focused|called DAPO",
+      "depends_on": [
+        "ch-01",
+        "ch-03"
+      ],
+      "summary": "介绍 DAPO 算法，重点讨论在长推理链场景下强化学习训练的稳定性，以及实现细节对扩展效果的关键影响。"
+    },
+    {
+      "id": "ch-05",
+      "title": "总结：闭环自我改进与可验证领域",
+      "order": 5,
+      "heading_pattern": "To summarize|In conclusion|Let's wrap up|Summary",
+      "depends_on": [
+        "ch-01",
+        "ch-02",
+        "ch-03",
+        "ch-04"
+      ],
+      "summary": "总结预训练、微调、测试时扩展和训练时扩展的关系，强调在可验证领域（如数学与代码）中闭环自我改进的潜力。"
+    }
+  ],
+  "metadata": {
+    "model": "claude-sonnet-4-6"
+  }
+}

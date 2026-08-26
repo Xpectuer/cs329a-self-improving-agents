@@ -1,0 +1,79 @@
+{
+  "source_file": "02-Stanford CS329A Self-Improving AI Agents ｜ Part 2 ｜ Test-Time Compute Scaling.txt",
+  "total_chars": 46964,
+  "chapters": [
+    {
+      "id": "ch-01",
+      "title": "引言：从预训练到推理时计算扩展",
+      "order": 1,
+      "heading_pattern": "So today, we are going to talk about inference scaling|three stages for LLM",
+      "depends_on": [],
+      "summary": "介绍 LLM 开发的预训练、微调与推理三个阶段，引出推理时计算扩展的主题。"
+    },
+    {
+      "id": "ch-02",
+      "title": "Large Language Monkeys：重复采样与验证器选择",
+      "order": 2,
+      "heading_pattern": "Let's first start with the Large Language Monkeys paper",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "通过多次采样同一问题并用验证器选择正确答案，能够提升较小模型的性能。"
+    },
+    {
+      "id": "ch-03",
+      "title": "推理时计算缩放定律：覆盖率与采样数的幂律关系",
+      "order": 3,
+      "heading_pattern": "we can define a similar scaling laws, but this time for inference|test-time compute",
+      "depends_on": [
+        "ch-02"
+      ],
+      "summary": "在推理阶段，覆盖率随并行采样数量呈指数幂律增长，可用于预测所需资源。"
+    },
+    {
+      "id": "ch-04",
+      "title": "幂律行为的来源：难题长尾分布",
+      "order": 4,
+      "heading_pattern": "we looked a bit more into why we see this power law behavior",
+      "depends_on": [
+        "ch-03"
+      ],
+      "summary": "解释重复采样缩放定律成立的必要条件是数据集中存在一条难题长尾分布。"
+    },
+    {
+      "id": "ch-05",
+      "title": "工程范式转变：将更多算力投入推理阶段",
+      "order": 5,
+      "heading_pattern": "what this means for the science and the engineering around LLMs",
+      "depends_on": [
+        "ch-03",
+        "ch-04"
+      ],
+      "summary": "讨论从重预训练转向在推理阶段离线增加计算量以提升模型能力的新范式。"
+    },
+    {
+      "id": "ch-06",
+      "title": "自动化验证的必要性与可验证领域",
+      "order": 6,
+      "heading_pattern": "the need for automated verification|verification is easier than the others",
+      "depends_on": [
+        "ch-02",
+        "ch-05"
+      ],
+      "summary": "说明重复采样需要自动验证器，并举例数学证明、单元测试、CUDA 生成等可验证任务。"
+    },
+    {
+      "id": "ch-07",
+      "title": "不可验证领域中的选择方法：多数投票与模型排序器的局限",
+      "order": 7,
+      "heading_pattern": "Now there are domains that we don't have verifier for",
+      "depends_on": [
+        "ch-06"
+      ],
+      "summary": "指出在缺乏验证器的领域中，多数投票等选择方法与真正覆盖率之间存在较大差距。"
+    }
+  ],
+  "metadata": {
+    "model": "claude-sonnet-4-6"
+  }
+}

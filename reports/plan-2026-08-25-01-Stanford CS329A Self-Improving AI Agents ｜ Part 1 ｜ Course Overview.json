@@ -1,0 +1,65 @@
+{
+  "source_file": "01-Stanford CS329A Self-Improving AI Agents ｜ Part 1 ｜ Course Overview.txt",
+  "total_chars": 58438,
+  "chapters": [
+    {
+      "id": "ch-01",
+      "title": "欢迎、课程团队与课程概要",
+      "order": 1,
+      "heading_pattern": "Welcome, everyone",
+      "depends_on": [],
+      "summary": "两位授课老师开场介绍课程目标、教学团队和课程网站，为整节课定下基调。"
+    },
+    {
+      "id": "ch-02",
+      "title": "大语言模型的规模扩展趋势",
+      "order": 2,
+      "heading_pattern": "So let's take a look at an overview of the trends for large language models",
+      "depends_on": [],
+      "summary": "以损失下降和参数增长为主线，说明数据量、计算量与参数规模共同推动了大语言模型的性能提升。"
+    },
+    {
+      "id": "ch-03",
+      "title": "规模带来的零样本/少样本能力",
+      "order": 3,
+      "heading_pattern": "So why do we care about the models getting bigger",
+      "depends_on": [
+        "ch-02"
+      ],
+      "summary": "讨论模型变大后出现的少样本/零样本学习能力，以及这些能力如何让新任务应用更简单。"
+    },
+    {
+      "id": "ch-04",
+      "title": "涌现推理与思维链",
+      "order": 4,
+      "heading_pattern": "So on the reasoning side",
+      "depends_on": [
+        "ch-03"
+      ],
+      "summary": "介绍思维链作为大模型规模扩大后涌现出的重要推理能力，并举例说明其对数学和复杂任务的作用。"
+    },
+    {
+      "id": "ch-05",
+      "title": "ChatGPT的突破：指令微调与RLHF",
+      "order": 5,
+      "heading_pattern": "Now, a little bit of history here",
+      "depends_on": [
+        "ch-02"
+      ],
+      "summary": "回顾ChatGPT在2022年发布后的快速成功，并指出指令遵循和人类反馈强化学习是关键创新。"
+    },
+    {
+      "id": "ch-06",
+      "title": "语言模型的训练流程：预训练、微调与对齐",
+      "order": 6,
+      "heading_pattern": "But let's just take a step back and see how the process works",
+      "depends_on": [
+        "ch-05"
+      ],
+      "summary": "从预训练到人工偏好对齐，概述现代语言模型的核心训练步骤及其意义。"
+    }
+  ],
+  "metadata": {
+    "model": "claude-sonnet-4-6"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "source_file": "03-Stanford CS329A Self-Improving AI Agents ｜ Part 3 ｜ Robust Verification.txt",
+  "total_chars": 52061,
+  "chapters": [
+    {
+      "id": "ch-01",
+      "title": "引言：验证问题与讲座概览",
+      "order": 1,
+      "heading_pattern": "So lecture three is about verification|So in today's lecture",
+      "depends_on": [],
+      "summary": "承接上一讲关于推理时扩展与生成-验证差距的讨论，引出本讲主题：自动验证与挑选正确答案，并预告将介绍四篇论文。"
+    },
+    {
+      "id": "ch-02",
+      "title": "训练验证器解决数学问题（OpenAI 2021）",
+      "order": 2,
+      "heading_pattern": "Let's first start with training verifiers to solve math problems",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "深入讲解OpenAI 2021年的论文：引入GSM8K数学推理数据集，训练一个二元正确性验证器，并通过重复采样与验证器打分选出最终答案，实验表明验证器优于单纯微调方法。"
+    }
+  ],
+  "metadata": {
+    "model": "claude-sonnet-4-6"
+  }
+}

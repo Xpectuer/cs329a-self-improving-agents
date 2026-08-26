@@ -1,0 +1,67 @@
+{
+  "source_file": "07-Stanford CS329A Self-Improving AI Agents ｜ Part 7 ｜ Self-Improvement and Deep Research Agents.txt",
+  "total_chars": 62716,
+  "chapters": [
+    {
+      "id": "ch-01",
+      "title": "课程引言：通过搜索实现自我改进",
+      "order": 1,
+      "heading_pattern": "So today's focus will be very much on improving the models using search",
+      "depends_on": [],
+      "summary": "介绍课程主题：通过搜索提升模型能力，并概述代码模型搜索与深度研究式搜索两条主线。"
+    },
+    {
+      "id": "ch-02",
+      "title": "AlphaCode 问题背景与定义",
+      "order": 2,
+      "heading_pattern": "So let's start with AlphaCode.",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "引出 AlphaCode，说明其目标是解决竞赛编程问题，比普通代码补全更具挑战性。"
+    },
+    {
+      "id": "ch-03",
+      "title": "AlphaCode 流水线：预训练与微调",
+      "order": 3,
+      "heading_pattern": "So just to walk through things step-by-step.",
+      "depends_on": [
+        "ch-02"
+      ],
+      "summary": "逐步讲解 AlphaCode 的模型预训练、微调、正则化以及价值条件预测等关键技术。"
+    },
+    {
+      "id": "ch-04",
+      "title": "AlphaCode 大规模采样与候选生成",
+      "order": 4,
+      "heading_pattern": "Once they get this model, they are going to try large scale sampling.",
+      "depends_on": [
+        "ch-03"
+      ],
+      "summary": "描述 AlphaCode 为每道题生成百万级多样化解法，并讨论采样规模对模型性能的影响。"
+    },
+    {
+      "id": "ch-05",
+      "title": "AlphaCode 过滤、聚类与评估",
+      "order": 5,
+      "heading_pattern": "Now the reason this clustering is important",
+      "depends_on": [
+        "ch-04"
+      ],
+      "summary": "说明如何通过过滤和聚类缩小候选集，并在 Codeforces 平台上评估 AlphaCode 的实际排名表现。"
+    },
+    {
+      "id": "ch-06",
+      "title": "课堂讨论与问答",
+      "order": 6,
+      "heading_pattern": "Before I move further, questions?",
+      "depends_on": [
+        "ch-05"
+      ],
+      "summary": "记录学生关于不同竞赛场次表现差异以及采样规模如何影响结果的提问与讨论。"
+    }
+  ],
+  "metadata": {
+    "model": "claude-sonnet-4-6"
+  }
+}

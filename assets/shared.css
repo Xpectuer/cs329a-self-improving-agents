@@ -1,0 +1,235 @@
+/* ============================================================
+   Shared stylesheet for the 自进化 Agent teaching workspace
+   Tufte-inspired: warm paper background, serif body, red accents.
+   Print-friendly. All lessons link this file.
+   ============================================================ */
+
+:root {
+  --paper: #fffff8;
+  --ink: #111;
+  --accent: #a00;
+  --muted: #666;
+  --line: #ddd;
+  --good: #1a7f37;
+  --bad: #cf222e;
+  --code-bg: #f4f0e8;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 17px; }
+
+body {
+  margin: 0;
+  padding: 2.5rem 1.25rem 4rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+/* ---------- Typography ---------- */
+
+h1, h2, h3 {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: 1.9rem;
+  margin: 0 0 0.25rem;
+}
+
+h2 {
+  font-size: 1.3rem;
+  margin: 2.4rem 0 0.6rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.3rem;
+}
+
+h3 { font-size: 1.05rem; margin: 1.6rem 0 0.4rem; }
+
+p { margin: 0.6rem 0; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+strong { font-weight: 700; }
+
+em { font-style: italic; }
+
+.lead { font-size: 1.08rem; color: #333; }
+
+.meta {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  font-style: italic;
+}
+
+/* ---------- Components ---------- */
+
+.sidenote { font-size: 0.85rem; color: var(--muted); }
+
+blockquote {
+  margin: 1rem 0;
+  padding: 0.4rem 1rem;
+  border-left: 3px solid var(--accent);
+  background: rgba(170, 0, 0, 0.04);
+  color: #333;
+}
+
+blockquote p { margin: 0.3rem 0; }
+
+code {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+pre {
+  background: var(--code-bg);
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+pre code { background: none; padding: 0; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.92rem;
+}
+
+th, td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
+
+/* ---------- Quiz widget ---------- */
+
+.quiz { margin: 1.4rem 0; }
+
+.quiz ol { list-style: none; padding: 0; margin: 0; }
+
+.quiz [data-q] {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+  background: #fff;
+}
+
+.quiz [data-q] .q-text { font-weight: 600; margin: 0 0 0.6rem; }
+
+.quiz .options { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.quiz button[data-opt] {
+  text-align: left;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.quiz button[data-opt]:hover { border-color: var(--accent); }
+
+.quiz button[data-opt].right {
+  background: #e6f4ea;
+  border-color: var(--good);
+  color: var(--good);
+  font-weight: 700;
+}
+
+.quiz button[data-opt].wrong {
+  background: #fdecec;
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.quiz [data-feedback] {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  color: #333;
+  border-top: 1px dashed var(--line);
+  padding-top: 0.5rem;
+}
+
+.quiz [data-score] {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-top: 0.8rem;
+}
+
+/* ---------- Collapsible answer ---------- */
+
+details {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  margin: 1rem 0;
+  padding: 0.6rem 1rem;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  font-size: 0.92rem;
+}
+
+details[open] summary { margin-bottom: 0.5rem; }
+
+/* ---------- Callouts ---------- */
+
+.callout {
+  border-radius: 6px;
+  padding: 0.7rem 1rem;
+  margin: 1.2rem 0;
+  font-size: 0.95rem;
+}
+
+.callout.win { background: #e6f4ea; border: 1px solid var(--good); }
+.callout.ask { background: #fff8e6; border: 1px solid #d4a72c; }
+
+/* ---------- Print ---------- */
+
+@media print {
+  body { background: #fff; padding: 0; }
+  a { color: var(--ink); text-decoration: underline; }
+  .quiz button[data-opt] { border-color: #999; }
+  details { border-color: #999; }
+  details summary { color: var(--ink); }
+  details[open] { page-break-inside: avoid; }
+}

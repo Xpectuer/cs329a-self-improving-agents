@@ -1,0 +1,33 @@
+{
+  "source_file": "04-Stanford CS329A Self-Improving AI Agents ｜ Part 4 ｜ Learning from Feedback with Tools⧸Code.txt",
+  "total_chars": 65582,
+  "chapters": [
+    {
+      "id": "ch-01",
+      "title": "ReAct: 结合推理与行动的工具调用",
+      "order": 1,
+      "heading_pattern": "first paper.*ReAct|ReAct",
+      "depends_on": [],
+      "summary": "介绍ReAct方法，通过交替生成推理轨迹和动作，使语言模型能够与环境交互并利用外部知识提升任务表现。"
+    },
+    {
+      "id": "ch-02",
+      "title": "RLEF: 利用执行反馈引导代码LLM",
+      "order": 2,
+      "heading_pattern": "second paper|RLEF|grounding code LLMs in execution feedback",
+      "depends_on": [],
+      "summary": "探讨RLEF方法，通过执行代码和测试获得的反馈来改进代码生成模型，实现基于执行结果的学习。"
+    },
+    {
+      "id": "ch-03",
+      "title": "Constitutional AI: 通过自我批评实现反馈闭环",
+      "order": 3,
+      "heading_pattern": "third thing|constitutional AI",
+      "depends_on": [],
+      "summary": "讲述Constitutional AI方法，利用模型自我批评和修正机制形成反馈循环，从而提升模型自身表现。"
+    }
+  ],
+  "metadata": {
+    "model": "claude-sonnet-4-6"
+  }
+}

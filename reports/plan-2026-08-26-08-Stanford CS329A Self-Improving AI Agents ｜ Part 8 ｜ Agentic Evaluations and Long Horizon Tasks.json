@@ -1,0 +1,47 @@
+{
+  "source_file": "08-Stanford CS329A Self-Improving AI Agents ｜ Part 8 ｜ Agentic Evaluations and Long Horizon Tasks.txt",
+  "total_chars": 65165,
+  "chapters": [
+    {
+      "id": "ch-01",
+      "title": "引言：Agentic Evaluations 与 Long Horizon Tasks 概述",
+      "order": 1,
+      "heading_pattern": "Today's lecture will focus on genetic evaluations and long horizon tasks",
+      "depends_on": [],
+      "summary": "介绍讲座主题、课堂互动，以及将要讨论的三个核心基准（METR、GDPVal、DeepScholar-Bench），并说明衡量AI智能与进步所面临的挑战。"
+    },
+    {
+      "id": "ch-02",
+      "title": "METR：时间跨度基准与可靠性评估",
+      "order": 2,
+      "heading_pattern": "So let's start with the first one|METR",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "详细讲解METR基准的任务套件（SWAA、HCAST、RE-Bench）、人类基线获取方法，以及模型成功率随时间跨度的变化趋势，揭示了长任务中模型保持能力下降的现象。"
+    },
+    {
+      "id": "ch-03",
+      "title": "GDPVal：真实世界经济价值基准",
+      "order": 3,
+      "heading_pattern": "second paper that we'll look at is GDPVal|GDPVal",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "介绍OpenAI发布的GDPVal基准，它通过比较模型与专家在真实经济任务上的胜率，衡量模型完成具有经济价值任务的实际能力。"
+    },
+    {
+      "id": "ch-04",
+      "title": "DeepScholar-Bench：深度研究综合任务",
+      "order": 4,
+      "heading_pattern": "the last task will very much focus on deep research style tasks|DeepScholar-Bench",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "讲解斯坦福的DeepScholar-Bench实时基准，聚焦于生成式研究综合任务（如自动撰写论文相关工作章节），评估模型在深度研究类长任务上的表现。"
+    }
+  ],
+  "metadata": {
+    "model": "claude-sonnet-4-6"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "source_file": "05-Stanford CS329A Self-Improving AI Agents ｜ Part 5 ｜ Planning and Multi-Step Reasoning.txt",
+  "total_chars": 53571,
+  "chapters": [
+    {
+      "id": "ch-01",
+      "title": "课程总览与主题引入",
+      "order": 1,
+      "heading_pattern": "^# 05-Stanford CS329A Self-Improving AI Agents",
+      "depends_on": [],
+      "summary": "介绍本讲主题为 planning 和 multi-step reasoning，并预告将讨论三篇相关论文。"
+    },
+    {
+      "id": "ch-02",
+      "title": "LATS 论文背景与问题定义",
+      "order": 2,
+      "heading_pattern": "Let's start with this paper from ICML of last year|Language Agent Tree Search",
+      "depends_on": [
+        "ch-01"
+      ],
+      "summary": "引出 Language Agent Tree Search（LATS）论文，说明多步任务中需要推理、行动与搜索，并强调探索和利用多样路径的挑战。"
+    },
+    {
+      "id": "ch-03",
+      "title": "LATS 核心直觉与六个阶段",
+      "order": 3,
+      "heading_pattern": "six types of stages|selection, expansion, evaluation, simulation, back propagation, and reflection",
+      "depends_on": [
+        "ch-02"
+      ],
+      "summary": "通过迷宫示例解释 LATS 的树搜索过程，包括选择、扩展、评估、模拟、反向传播和反思六个阶段。"
+    },
+    {
+      "id": "ch-04",
+      "title": "LATS 中的数学机制：价值函数、UCT 与反向传播",
+      "order": 4,
+      "heading_pattern": "Let's talk about how these value function and backpropagation is used",
+      "depends_on": [
+        "ch-03"
+      ],
+      "summary": "详细介绍状态价值函数、自洽性评分、UCT 平衡探索与利用的方式，以及轨迹返回值如何反向传播更新节点评分。"
+    },
+    {
+      "id": "ch-05",
+      "title": "反思记忆与课堂讨论",
+      "order": 5,
+      "heading_pattern": "So once backpropagation is done",
+      "depends_on": [
+        "ch-04"
+      ],
+      "summary": "说明轨迹结束后模型追加反思文本并纳入后续搜索，同时包含关于 UCT 使用时长的课堂问答。"
+    }
+  ],
+  "metadata": {
+    "model": "claude-sonnet-4-6"
+  }
+}
