@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 3 课 · 测试时计算扩展：把算力变成质量</title>
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<main>
+
+<h1>第 3 课 · 测试时计算扩展</h1>
+<p class="meta">第 3 课 / 共 9 课 · 约 6 分钟 · 配套参考：<a href="../reference/0004-test-time-scaling.html">测试时扩展速查卡</a> · <a href="../reference/0003-verifier-choices.html">验证器速查卡</a></p>
+
+<details>
+<summary>先回忆上一课（30 秒）</summary>
+<p>1M 采样下 10@M ≈ 30% vs pass@M > 40%——这 10 个百分点的差额说明什么？<br>
+答：<strong>筛选/选择阶段是瓶颈</strong>（模型生成的正确解没被挑出来），这是生成-验证差距的直接体现。</p>
+</details>
+
+<p class="lead">上一课我们把验证器摸清了。这一课看它怎么和算力配合：<strong>模型参数一个不动，推理时多烧算力，质量还能持续涨</strong>——这是过去一年工程范式的重大转变。</p>
+
+<h2>1. 大图景：算力搬到了推理侧</h2>
+
+<p>传统上算力几乎全押在训练侧（预训练烧掉亿万级的钱，推理一次只要一点点）。<strong>测试时计算扩展</strong>（test-time compute scaling）反着来：不改变模型参数、不做微调，在推理阶段投入更多计算（重复采样、搜索、反思），把推理侧的算力也变成能力来源。甚至可以是<strong>离线</strong>的——让 agent 自己反复迭代、不断改进答案质量，不占用用户在线时间。（<a href="../wiki/inference-scaling.md">wiki 页</a>）</p>
+
+<h2>2. 四个指标，一次分清</h2>
+
+<table>
+<tr><th>指标</th><th>含义</th><th>衡量什么</th></tr>
+<tr><td><strong>pass@k</strong></td><td>生成 k 个全部提交</td><td>生成/覆盖上限（搜索能力）</td></tr>
+<tr><td><strong>10@k</strong></td><td>生成 k 个只交 10 个</td><td>生成 + 筛选/聚类能力</td></tr>
+<tr><td><strong>best-of-n</strong></td><td>验证器评分选最优</td><td>验证器质量 × 采样规模</td></tr>
+<tr><td><strong>自洽性 SC</strong></td><td>多数投票</td><td>无验证器时的兜底</td></tr>
+</table>
+
+<p>注意 10@k 的含义（<a href="../wiki/10-at-k.md">wiki 页</a>）：你不是向评测平台交 100 万个解，而是只有 10 次提交机会——所以它在考「<strong>从巨量候选里策展出少量提交</strong>」这个完整流程。</p>
+
+<h2>3. 两条规律：有验证器和没验证器</h2>
+
+<p><strong>有验证器时</strong>——Large Language Monkeys 的发现：求解率随采样预算<strong>对数线性增长</strong>，模型越大斜率越陡；小模型要追平大模型，往往需要多几个数量级的样本。（<a href="../wiki/large-language-monkeys.md">wiki 页</a>）</p>
+
+<p><strong>没可靠验证器时</strong>——多数投票采样到 10~50 个就<strong>饱和</strong>：难题的正确解在成千上万样本里只出现一两次，被错误答案淹没，频率投票抓不住它。</p>
+
+<p>实验里的稳定趋势（<a href="../wiki/large-language-monkeys.md">wiki 页</a>）：10@1k → 10@10k → 10@100k → 10@1M 一路提升；41B 一致优于 9B；<strong>41B + 聚类又一致优于 41B</strong>——增益叠加。</p>
+
+<h2>4. 聚类：把雷同换成多样</h2>
+
+<p>聚类回答的问题是：只能交 10 个，但千万候选里大量解<strong>语义等价</strong>（写法不同、行为相同），重复提交没有收益。所以按「语法不同但语义等价」分组，每个等价类挑一个代表，提交的 10 个就覆盖了 10 种不同解题思路。</p>
+
+<p>AlphaCode 的实现（<a href="../wiki/solution-clustering.md">wiki 页</a>）：先做 <strong>样例测试过滤</strong>，再让一个<strong>独立的测试输入生成模型</strong>为题目预测测试输入，用这些输入执行候选并比对输出——输出一致即判语义等价归为一簇。不需要人工标注，也能对没见过的新题聚类。</p>
+
+<blockquote>
+<p>关键认知（课程原话）：<strong>模型已经把解蕴含在其搜索空间里，问题是如何从中策展出答案</strong>——这就是"通过搜索实现自我改进"。</p>
+</blockquote>
+
+<p>AlphaCode 由此闭环：100 万候选 → 过滤 → 聚类 → 10 个提交上真实竞赛平台 → 10 场 Codeforces 平均排名 <strong>54.3</strong>（≈ 六个月内 28% 的参赛者水平）。</p>
+
+<h2>5. 选择器决策</h2>
+
+<table>
+<tr><th>场景</th><th>主选</th></tr>
+<tr><td>可验证领域（答案/单测）</td><td>规则验证器 + 过滤（+ 聚类回补多样性）</td></tr>
+<tr><td>不可验证（文案/设计）</td><td>RM / LLM-as-a-Judge 重排</td></tr>
+<tr><td>啥都没有</td><td>多数投票兜底（难点会饱和）</td></tr>
+</table>
+
+<h2>6. 练习：五道题，凭记忆作答</h2>
+
+<div class="quiz" data-quiz>
+<ol>
+
+<li data-q data-answer="B">
+<p class="q-text">Q1. 测试时计算扩展改变的是什么？</p>
+<div class="options">
+<button data-opt="A">模型参数权重</button>
+<button data-opt="B">推理计算投入</button>
+<button data-opt="C">训练数据规模</button>
+<button data-opt="D">人工标注数量</button>
+</div>
+<p data-feedback hidden>不改变参数、不做微调，在推理阶段投入更多计算（采样/搜索/反思）来提升输出质量。</p>
+</li>
+
+<li data-q data-answer="C">
+<p class="q-text">Q2. pass@k 与 10@k 的核心差异是？</p>
+<div class="options">
+<button data-opt="A">评测数据规模不同</button>
+<button data-opt="B">采样规模策略不同</button>
+<button data-opt="C">是否受限提交预算</button>
+<button data-opt="D">是否需要训练阶段</button>
+</div>
+<p data-feedback hidden>pass@k 全部提交（免费测）；10@k 只交 10 个——要自己先做筛选/聚类，多考「策展」能力。</p>
+</li>
+
+<li data-q data-answer="A">
+<p class="q-text">Q3. 聚类解决的核心问题是？</p>
+<div class="options">
+<button data-opt="A">候选重复与多样不足</button>
+<button data-opt="B">推理延迟显著升高</button>
+<button data-opt="C">验证器信号噪声偏大</button>
+<button data-opt="D">模型参数发生漂移</button>
+</div>
+<p data-feedback hidden>大量候选语义等价、写法雷同；聚类按语义分组、每簇挑代表，把有限提交换成不同思路。</p>
+</li>
+
+<li data-q data-answer="A">
+<p class="q-text">Q4. 多数投票采样后饱和的原因？</p>
+<div class="options">
+<button data-opt="A">正确答案出现频率低</button>
+<button data-opt="B">验证器评分不够准</button>
+<button data-opt="C">模型参数无法更新</button>
+<button data-opt="D">采样数量实在太少</button>
+</div>
+<p data-feedback hidden>难题的正确解在成百上千样本里只出现一两次，被海量错误答案淹没；频率投票捕捉不到低频正确解。</p>
+</li>
+
+<li data-q data-answer="B">
+<p class="q-text">Q5. AlphaCode 语义聚类靠什么判等价？</p>
+<div class="options">
+<button data-opt="A">人工标注语义类别</button>
+<button data-opt="B">测试输入生成模型</button>
+<button data-opt="C">直接比较代码文本</button>
+<button data-opt="D">冒烟测试随机抽验</button>
+</div>
+<p data-feedback hidden>训练独立的测试输入生成模型预测题目输入，执行候选比对输出：一致即语义等价，归入同簇。</p>
+</li>
+
+</ol>
+<p data-score hidden></p>
+</div>
+
+<h2>7. 小作业：瓶颈在哪</h2>
+
+<p>某模型在竞赛题上 <code>pass@1M = 42%</code>，但 <code>10@1M = 30%</code>。</p>
+<ol>
+<li>瓶颈集中在哪一步？为什么？</li>
+<li>给出<strong>两种</strong>可行的改进方案，各说一个代价。</li>
+</ol>
+<p>把答案发给 Kiki 验证喵。</p>
+
+<h2>主源推荐</h2>
+
+<ul>
+<li><strong>CS329A 第 2 讲</strong>（测试时计算扩展）+ <strong>AlphaCode 论文</strong>（<a href="https://arxiv.org/abs/2203.07814">arXiv:2203.07814</a>）：采样-筛选-聚类的原始案例</li>
+<li><strong>Large Language Monkeys</strong>（<a href="https://arxiv.org/abs/2407.21787">arXiv:2407.21787</a>）：对数线性扩展律的一手报告</li>
+</ul>
+
+<hr>
+
+<p><strong>下一课预告</strong>：训练时扩展与 RL——STaR 用自生成数据微调、GRPO/DAPO 用验证信号强化，把推理时学到的信号带回权重里。</p>
+
+<div class="callout ask">
+<p><strong>喵！</strong>指标、聚类、或者作业的第一题卡住了——随时问 Kiki。快问快答和上一课的作业答案也可以继续发～</p>
+</div>
+
+</main>
+</body>
+</html>

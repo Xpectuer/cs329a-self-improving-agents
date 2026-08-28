@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 2 课 · 生成-验证差距：从「会做」到「会判」</title>
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<main>
+
+<h1>第 2 课 · 生成-验证差距</h1>
+<p class="meta">第 2 课 / 共 9 课 · 约 6 分钟 · 配套参考：<a href="../reference/0003-verifier-choices.html">验证器选型速查卡</a> · <a href="../reference/0002-self-evolution-framework.html">框架速查卡</a></p>
+
+<details>
+<summary>先回忆上一课（30 秒，别翻材料）</summary>
+<p>① 自进化闭环四步？② 测试内 vs 测试间的判据？<br>
+答：① <code>生成 → 验证 → 学习 → 搜索</code>；② 看学习相对任务执行的时序——任务进行中=测试内，任务完成之间=测试间（ICL/SFT/RL 机制与它正交）。</p>
+</details>
+
+<p class="lead">上一课我们说验证是闭环的一环。这一课要直面一个扎心的事实：<strong>模型「会做」但未必「会判」</strong>——这就是生成-验证差距，它是测试时扩展与训练时扩展共同的瓶颈。</p>
+
+<h2>1. 差距是什么</h2>
+
+<p><strong>生成-验证差距（generation-verification gap）</strong>：模型的<strong>生成能力强，验证能力弱</strong>。当没有可靠验证器时，从一大堆自己生成的候选里选出正确解，远比生成它们更难。（<a href="../wiki/generation-verification-gap.md">wiki 页</a>）</p>
+
+<p>两条实证证据：</p>
+<ul>
+<li><strong>多数投票会饱和</strong>：采样到 10~50 个答案后，多数投票性能就趋于平稳；而假设存在完美验证器，性能上限远高于它——且在更难的任务（MATH vs GSM8K）上差距更大。</li>
+<li><strong>10@k vs pass@k</strong>：在 1M 采样下，只能提交 10 个解时成功率约 <strong>30%（10@M）</strong>，全部提交可超 <strong>40%（pass@M）</strong>——筛选/聚类阶段是瓶颈；聚类能显著回补 10@k。</li>
+</ul>
+
+<h2>2. 为什么它是瓶颈</h2>
+
+<p>验证器是闭环的<strong>枢纽</strong>，同一个验证器站在两个位置上：</p>
+
+<blockquote>
+<p><strong>测试时</strong>：生成 → 验证器筛选 → 提交（best-of-n、10@k）<br>
+<strong>训练时</strong>：生成 → 验证器打分 → 奖励 → 更新权重（STaR、RLVR）</p>
+</blockquote>
+
+<p>没有可信验证：测试时不知道选哪个（只能退回多数投票），训练时不知道奖励什么（退不回来——没有奖励信号就谈不上学习）。<strong>验证器的质量决定了整个自进化闭环的天花板。</strong>（<a href="../wiki/verification.md">wiki 页</a>）</p>
+
+<h2>3. 四类验证器怎么选</h2>
+
+<table>
+<tr><th>类型</th><th>判什么</th><th>一句话定位</th></tr>
+<tr><td><strong>符号/规则</strong></td><td>数学答案、单元测试、输出等价</td><td>可靠自动，但只限可验证领域</td></tr>
+<tr><td><strong>ORM</strong>（结果奖励模型）</td><td>最终答案整体打分</td><td>标注便宜，但「只知道对错，不知错哪」</td></tr>
+<tr><td><strong>PRM</strong>（过程奖励模型）</td><td>推理每一步打分</td><td>能定位错步，但步骤标注贵</td></tr>
+<tr><td><strong>LLM-as-a-Judge</strong></td><td>开放式输出质量</td><td>灵活可靠存疑，适合开放任务</td></tr>
+</table>
+
+<p><strong>ORM vs PRM 的取舍</strong>：ORM 只要答案对错就能训，适合整体筛选（best-of-n）；PRM 是过程监督，能<strong>更早定位错误</strong>、给训练提供细粒度信号，但需要步骤级标注——PRM800K 就用了约 80 万个步骤的人类标注。</p>
+
+<p><strong>Math-Shepherd 的招</strong>：不人工标步骤，而把「步骤质量」定义为<strong>从该步骤出发最终到达正确解的可能性</strong>——从每步继续采样 N 条轨迹看正确比例（硬估计：有一条对 → 1；软估计：按频率），再用这个 PRM 既做测试时选择也做训练时强化，无人工标注就超过了 SC / ORM / PRM800K 基线。（<a href="../wiki/process-reward-model.md">PRM</a> · <a href="../wiki/math-shepherd.md">Math-Shepherd</a>）</p>
+
+<h2>4. 为什么数学、编程、语言转换最成熟</h2>
+
+<blockquote>
+<p>验证机制必须<strong>比生成任务本身更简单</strong>，才能大规模自动筛选。（<a href="../wiki/verifiable-domains.md">可验证领域</a>）</p>
+</blockquote>
+
+<p>形式化证明、单元测试/执行反馈、输入输出等价性都满足这一点——于是「生成→验证→筛选→更新」闭环可靠运转。数学上的结果：GPT-3.5 在 AIME 约 5%，DeepSeekMath-7B 靠训练时扩展冲到 51.7%+，基座不大却大幅反超。可验证领域，是自进化最肥沃的土壤。</p>
+
+<h2>5. 练习：五道题，凭记忆作答</h2>
+
+<div class="quiz" data-quiz>
+<ol>
+
+<li data-q data-answer="B">
+<p class="q-text">Q1. 生成-验证差距说的是？</p>
+<div class="options">
+<button data-opt="A">验证能力强于生成</button>
+<button data-opt="B">生成强于可靠验证</button>
+<button data-opt="C">生成验证皆偏薄弱</button>
+<button data-opt="D">生成验证旗鼓相当</button>
+</div>
+<p data-feedback hidden>模型能生成大量正确候选（pass@k 很高），但可靠地从候选中挑出正确解难得多——生成强、验证弱。</p>
+</li>
+
+<li data-q data-answer="A">
+<p class="q-text">Q2. 验证器在闭环中的两个位置是？</p>
+<div class="options">
+<button data-opt="A">筛选候选与提供奖励</button>
+<button data-opt="B">生成候选与更新权重</button>
+<button data-opt="C">存储轨迹与延迟测试</button>
+<button data-opt="D">标注数据与评测结果</button>
+</div>
+<p data-feedback hidden>测试时做「选」（best-of-n、10@k 筛选）；训练时做「教」（打分给奖励信号）。生成/更新是别的环节。</p>
+</li>
+
+<li data-q data-answer="C">
+<p class="q-text">Q3. 想定位推理错在哪一步，用哪种？</p>
+<div class="options">
+<button data-opt="A">结果奖励模型</button>
+<button data-opt="B">规则检查工具</button>
+<button data-opt="C">过程奖励模型</button>
+<button data-opt="D">语言裁判总评</button>
+</div>
+<p data-feedback hidden>PRM 对推理每一步打分（过程监督），能早定位错误；ORM 只对最终结果打分。</p>
+</li>
+
+<li data-q data-answer="B">
+<p class="q-text">Q4. 数学编程自进化最成熟，主因是？</p>
+<div class="options">
+<button data-opt="A">数据规模更庞大</button>
+<button data-opt="B">结果可自动验证</button>
+<button data-opt="C">模型天生更聪明</button>
+<button data-opt="D">场景普及更广泛</button>
+</div>
+<p data-feedback hidden>验证机制比生成任务更简单（形式化证明/单测/输出等价），可靠信号支撑了大规模筛选与训练。</p>
+</li>
+
+<li data-q data-answer="A">
+<p class="q-text">Q5. Math-Shepherd 如何替代人工步骤标注？</p>
+<div class="options">
+<button data-opt="A">自动生成步骤标签</button>
+<button data-opt="B">人工标注步骤数据</button>
+<button data-opt="C">完全放弃过程监督</button>
+<button data-opt="D">提升生成器验证力</button>
+</div>
+<p data-feedback hidden>把每次 rollout 到完成的正确性作为「该步骤质量」的估计（硬/软估计），自动打标签训 PRM。</p>
+</li>
+
+</ol>
+<p data-score hidden></p>
+</div>
+
+<h2>6. 小作业：验证器选型</h2>
+
+<p>给下面两个场景各选一验证器，并说理由（答案告诉 Kiki，我来验证喵）：</p>
+<ol>
+<li><strong>数学竞赛</strong>：做题模型一次生成 100 个解题过程，你只打算提交 1 个——你用什么验证器/策略？</li>
+<li><strong>写产品文案</strong>：文案没有标准答案，你想从 5 个草稿里选最好的——能用规则验证器吗？为什么？用什么替代？</li>
+</ol>
+
+<h2>主源推荐</h2>
+
+<ul>
+<li><strong>CS329A 第 3 讲 Robust Verification</strong>：<a href="https://www.youtube.com/playlist?list=PLangBM27OtEA">课程公开录像</a> · 本地 <a href="../wiki/verification.md">wiki 页</a></li>
+<li><strong>Math-Shepherd</strong>（<a href="https://arxiv.org/abs/2312.08935">arXiv:2312.08935</a>）：自动步骤标签训练 PRM 的完整思路</li>
+<li><strong>OpenAI PRM800K</strong>（<a href="https://arxiv.org/abs/2305.20050">Let's Verify Step by Step</a>）：人工步骤标注的上限参考</li>
+</ul>
+
+<hr>
+
+<p><strong>下一课预告</strong>：测试时计算扩展——既然会「选」，怎么把「算力」换成「质量」：best-of-n、10@k/pass@k、采样-聚类-筛选的全景。</p>
+
+<div class="callout ask">
+<p><strong>喵！</strong>差距、ORM/PRM、或者作业里的场景拿不准——直接问 Kiki。另外上一课的 5 题 quiz 和小作业若还没做，随时回来补～</p>
+</div>
+
+</main>
+</body>
+</html>

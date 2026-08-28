@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>测试时计算扩展速查卡：指标 · 规律 · 集群策略</title>
+<link rel="stylesheet" href="../assets/shared.css">
+</head>
+<body>
+<main>
+<h1>测试时计算扩展速查卡</h1>
+<p class="meta">第 3 课配套参考 · 后续课程会反复回看 · 打印友好</p>
+<p class="lead">不训模型的情况下，怎么把推理时的算力变成质量：指标怎么读、规律怎么看、受限提交时怎么选。</p>
+
+<h2>1. 四个关键指标</h2>
+
+<table>
+<tr><th>指标</th><th>含义</th><th>衡量什么</th></tr>
+<tr><td><strong>pass@k</strong></td><td>生成 k 个样本、全部提交</td><td>生成/覆盖上限（搜索能力）</td></tr>
+<tr><td><strong>10@k</strong></td><td>生成 k 个、只交 10 个</td><td>生成 + 筛选/聚类能力（贴近真实约束）</td></tr>
+<tr><td><strong>best-of-n</strong></td><td>验证器给 n 个候选打分选最优</td><td>验证器质量 × 采样规模</td></tr>
+<tr><td><strong>自洽性（SC）</strong></td><td>多数投票（思维链采样后取众数）</td><td>不依赖验证器的兜底策略</td></tr>
+</table>
+
+<h2>2. 两条扩展规律</h2>
+
+<blockquote>
+<p><strong>有验证器</strong>：求解率随采样预算<strong>对数线性增长</strong>（Large Language Monkeys）——模型越大斜率越陡。</p>
+<p><strong>无可靠验证器</strong>：多数投票在采样 10~50 个后<strong>饱和</strong>——难题的正确解在千万样本中只出现一两次，被淹没。</p>
+</blockquote>
+
+<p class="sidenote">数字锚点：1M 采样下 10@M ≈ 30% vs pass@M > 40%，差额就是筛选瓶颈（第 2 课）；10@k 从 10@1k 拉到 10@1M 持续提升；41B 一致优于 9B，41B+聚类又一致优于 41B。</p>
+
+<h2>3. 受限提交的选择器决策</h2>
+
+<table>
+<tr><th>场景</th><th>主选</th><th>理由</th></tr>
+<tr><td>可验证领域（数学答案/单测）</td><td>规则验证器 + 过滤</td><td>可靠自动，直接筛掉错解</td></tr>
+<tr><td>可验证但候选雷同</td><td>+ <strong>语义聚类</strong></td><td>多样化解替代重复提交，回补 10@k 损失</td></tr>
+<tr><td>不可验证（文案/设计）</td><td>RM / LLM-as-a-Judge 重排</td><td>无 ground truth，只能学质量分数</td></tr>
+<tr><td>无任何验证器</td><td>多数投票（self-consistency）</td><td>兜底；难点上会饱和</td></tr>
+</table>
+
+<h2>4. AlphaCode 流水线（受限提交范式的完整体）</h2>
+
+<pre><code>题目 → 100 万候选采样（一半 Python 一半 C++，高温度 + 随机化标签/难度）
+     → 样例测试过滤
+     → 语义聚类（独立测试输入生成模型：预测输入 → 执行比对 → 语义等价归簇）
+     → 挑 10 个提交 → Codeforces 测评</code></pre>
+
+<p class="sidenote">成绩：10 场竞赛平均排名 54.3，≈ 六个月内 28% 的参赛者水平（AI 首次端到端解决真实竞赛题）。<a href="../wiki/alphacode.md">wiki/alphacode</a></p>
+
+<h2>5. 何时该扩展、何时该停</h2>
+
+<ul>
+<li><strong>该扩展</strong>：有可信验证器 + 任务难但正确解在模型搜索空间内（覆盖尚未饱和）</li>
+<li><strong>该停</strong>：多数投票已饱和且无验证器（加采样白烧算力）；小模型追大模型往往要指数级样本——考虑换训练侧</li>
+<li><strong>注意</strong>：纯采样扩展不改行为——按第 1 课标准它<strong>不是</strong>演化（是 test-time compute scaling，见 <a href="0002-self-evolution-framework.html">框架速查卡 §2.1</a>）</li>
+</ul>
+
+<hr>
+<p class="sidenote">依据：<a href="../wiki/large-language-monkeys.md">large-language-monkeys</a>、<a href="../wiki/10-at-k.md">10@k</a>、<a href="../wiki/solution-clustering.md">solution-clustering</a>、<a href="../wiki/self-consistency.md">self-consistency</a>、<a href="../wiki/alphacode.md">alphacode</a>；课程第 2 讲。</p>
+</main>
+</body>
+</html>

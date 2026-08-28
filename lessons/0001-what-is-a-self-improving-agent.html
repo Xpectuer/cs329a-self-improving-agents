@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 1 课 · 自进化是什么：一张地图的两个入口</title>
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<main>
+
+<h1>第 1 课 · 自进化是什么</h1>
+<p class="meta">第 1 课 / 共 9 课 · 约 6 分钟 · 配套参考：<a href="../reference/0002-self-evolution-framework.html">自进化框架速查卡</a> · <a href="../reference/0001-self-improving-agents-glossary.html">词汇表</a></p>
+
+<p class="lead">你已经把 CS329A 的 9 讲转录整理成了 59+ 个知识页——它们像散落的拼图。这节课给你两块"地图入口"：<strong>闭环</strong>（课程怎么描述自进化）和<strong>四问题</strong>（综述怎么拆分自进化），最后用<strong>三标准</strong>教你怎么判断一个系统到底算不算真自进化。</p>
+
+<h2>1. 课程定义：一个闭环</h2>
+
+<p>CS329A 第 2 讲把 <strong>self-improving agent</strong> 定义为：能通过<strong>验证器、奖励、强化学习和搜索</strong>的闭环，<strong>自主</strong>提升自身能力的智能体。闭环四步：</p>
+
+<blockquote>
+<p><code>生成 → 验证 → 学习 → 搜索</code></p>
+<p>模型先生成候选解 → 验证器给每个候选打分 → 反馈变成奖励信号 → 强化学习更新策略 → 推理时搜索探索更优候选。</p>
+</blockquote>
+
+<p>这个循环不断重复，模型就持续变好——这就是全课 9 讲穿起来的<strong>主线</strong>。（<a href="../wiki/self-improving-ai-agents.md">wiki 页</a> · 词汇表称其抽象版为「生成→验证→反馈→更新」）</p>
+
+<h2>2. 综述框架：四个问题</h2>
+
+<p>领域综述（Gao et al. 2025）把"自进化"拆成四个正交问题——对任意 agent 系统，回答这四个问题就能给它贴一张完整标签：</p>
+
+<table>
+<tr><th>问题</th><th>答案维度</th><th>一例</th></tr>
+<tr><td><strong>What</strong> 改什么</td><td>模型参数 / 上下文（提示、记忆）/ 工具集 / 架构拓扑</td><td>STaR 改模型参数</td></tr>
+<tr><td><strong>When</strong> 何时改</td><td>测试内（intra-test-time，靠 ICL）/ 测试间（inter-test-time，靠 SFT 或 RL）</td><td>best-of-n 是测试内</td></tr>
+<tr><td><strong>How</strong> 怎么改</td><td>奖励驱动 / 模仿演示 / 种群演化</td><td>GRPO 是奖励驱动</td></tr>
+<tr><td><strong>Where</strong> 属于哪类任务</td><td>通用 / 领域专用（编码、GUI、金融、医学、教育）</td><td>AlphaCode 是编码</td></tr>
+</table>
+
+<p class="sidenote">形式上把「改什么」写成一个函数：<code>Π′= f(Π, 轨迹, 反馈)</code>，即系统在任务轨迹与反馈驱动下变到新状态（Gao et al. §2.1）。</p>
+
+<h2>3. 三标准：算不算"真"自进化</h2>
+
+<p>很多系统都"会改进"，但不是所有都算自进化。综述给了操作性定义：</p>
+
+<blockquote>
+<p>自进化 agent 是<strong>基于自身轨迹或反馈信号</strong>，修改其<strong>内部参数、上下文状态、工具集或架构拓扑</strong>，且<strong>明确以提升未来性能为目标</strong>的 agent。</p>
+</blockquote>
+
+<p>三条纳入标准（<strong>缺一不可</strong>）：</p>
+
+<table>
+<tr><th>#</th><th>标准</th><th>一句话</th></tr>
+<tr><td>(i)</td><td><strong>经验驱动</strong></td><td>更新来自自身轨迹/自生成数据/环境反馈，针对能力边界</td></tr>
+<tr><td>(ii)</td><td><strong>持久效果</strong></td><td>产生持久、改变策略的作用，不是一次性行为</td></tr>
+<tr><td>(iii)</td><td><strong>自主探索</strong></td><td>有自主探索或自发学习的机制（自我反思、主动修改）</td></tr>
+</table>
+
+<p class="sidenote">现实中大部分系统落在「前自进化（proto-evolution）」到「强自进化」的光谱上，综述不设硬边界——但标准 (i)(ii)(iii) 是判断的口径。</p>
+
+<h2>4. 练习：五道题，凭记忆作答</h2>
+
+<p>先别翻 wiki。答完立即反馈。（选项均为 7 字，无格式暗示）</p>
+
+<div class="quiz" data-quiz>
+<ol>
+
+<li data-q data-answer="C">
+<p class="q-text">Q1. CS329A 第 2 讲给出的自进化闭环顺序是？</p>
+<div class="options">
+<button data-opt="A">生成→训练→验证→测试</button>
+<button data-opt="B">搜索→验证→生成→学习</button>
+<button data-opt="C">生成→验证→学习→搜索</button>
+<button data-opt="D">生成→验证→存储→部署</button>
+</div>
+<p data-feedback hidden>课程主线的闭环：生成候选解 → 验证器打分 → 反馈转奖励，RL 更新策略 → 推理时搜索更优候选，周而复始。</p>
+</li>
+
+<li data-q data-answer="B">
+<p class="q-text">Q2. 闭环中验证器（verifier）负责什么？</p>
+<div class="options">
+<button data-opt="A">生成许多候选解</button>
+<button data-opt="B">评定候选解正误</button>
+<button data-opt="C">更新权重向高分</button>
+<button data-opt="D">搜索更优解路径</button>
+</div>
+<p data-feedback hidden>验证器是「把生成了什么变成值多少」的那一环：对候选打分或判定正误；生成、更新、搜索是另外三环。</p>
+</li>
+
+<li data-q data-answer="D">
+<p class="q-text">Q3. STaR 用自生成的正确推理链迭代微调权重，演化位点是？</p>
+<div class="options">
+<button data-opt="A">上下文记忆位点</button>
+<button data-opt="B">工具集合位点</button>
+<button data-opt="C">架构拓扑位点</button>
+<button data-opt="D">模型参数位点</button>
+</div>
+<p data-feedback hidden>STaR 反复「生成推理 → 筛出正确的 → 用它微调模型」，改的是模型权重，所以 What = 模型参数。</p>
+</li>
+
+<li data-q data-answer="B">
+<p class="q-text">Q4. LATS 在单个任务内做树搜索，靠 LLM 裁判反馈指导后续节点，不改权重。演化发生在？</p>
+<div class="options">
+<button data-opt="A">预训练阶段演化</button>
+<button data-opt="B">测试内时间演化</button>
+<button data-opt="C">测试间时间演化</button>
+<button data-opt="D">人工标注冻结期</button>
+</div>
+<p data-feedback hidden>搜索 → 反思 → 反馈 → 改策略，全部发生在任务执行中，优化的是当前这一题，属于 intra-test-time（测试内时间演化）。</p>
+</li>
+
+<li data-q data-answer="C">
+<p class="q-text">Q5. 某系统只用人类标注的静态数据微调，不依据自身轨迹。它缺少哪条标准？</p>
+<div class="options">
+<button data-opt="A">持久效果标准</button>
+<button data-opt="B">自主探索标准</button>
+<button data-opt="C">经验驱动标准</button>
+<button data-opt="D">自我标注能力</button>
+</div>
+<p data-feedback hidden>标准 (i) 要求更新由自身轨迹、自生成数据或环境反馈驱动；只用人工静态数据、不依据自身轨迹，恰是缺少经验驱动。</p>
+</li>
+
+</ol>
+<p data-score hidden></p>
+</div>
+
+<h2>5. 小作业：给一个系统贴标签</h2>
+
+<p>选一个系统——<strong>LATS</strong>（<a href="../wiki/lats.md">wiki 页</a>）或 <strong>DeepSeekMath + GRPO</strong>（<a href="../wiki/deepseek-math.md">wiki 页</a>）——回忆它的运作方式，然后回答四个问题：它改什么（位点）、何时改（时序）、怎么改（机制）、属于哪类任务，再用三标准判断它算不算真自进化。把答案告诉 Kiki，我来验证并纠正喵。</p>
+
+<h2>主源推荐</h2>
+
+<p>本课知识来自两个主源（建议各读一节）：</p>
+<ul>
+<li><strong>CS329A 第 2 讲</strong>：<a href="https://www.youtube.com/playlist?list=PLangBM27OtEA">课程公开录像</a> · 本地转录 + <a href="../wiki/self-improving-ai-agents.md">wiki 页</a></li>
+<li><strong>Gao et al. 2025 综述 §1–2</strong>（<a href="https://arxiv.org/abs/2507.21046">arXiv:2507.21046</a>）：四问题框架与三标准的原始出处</li>
+</ul>
+
+<hr>
+
+<p><strong>下一课预告</strong>：生成-验证差距与验证器——为什么"会做但不会判"是整个领域的瓶颈，以及 ORM / PRM 两种验证器怎么选。</p>
+
+<div class="callout ask">
+<p><strong>喵！</strong>任何概念不清晰、练习有疑问、或想把某个系统也贴个标签——直接问 Kiki 就好，这正是 Kiki 在的地方。</p>
+</div>
+
+</main>
+</body>
+</html>

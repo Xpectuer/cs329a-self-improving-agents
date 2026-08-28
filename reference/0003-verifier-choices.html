@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>验证器选型速查卡：差距 · 四类验证器 · ORM/PRM</title>
+<link rel="stylesheet" href="../assets/shared.css">
+</head>
+<body>
+<main>
+<h1>验证器选型速查卡</h1>
+<p class="meta">第 2 课配套参考 · 后续课程会反复回看 · 打印友好</p>
+<p class="lead">验证器是自进化闭环的枢纽：它决定测试时「选哪个」，也决定训练时「奖励什么」。这张卡帮你看清差距在哪、该用哪种验证器。</p>
+
+<h2>1. 生成-验证差距</h2>
+
+<p><strong>定义：</strong>模型<strong>生成能力强、验证能力弱</strong>——当没有可靠验证器时，从大量候选里选出正确解远难于生成正确解。（<a href="../wiki/generation-verification-gap.md">wiki 页</a>）</p>
+
+<p><strong>两条实证证据：</strong></p>
+<ul>
+<li>多数投票采样到 10~50 个样本就<strong>饱和</strong>；完美验证器下的覆盖上限远高于它，难题（MATH vs GSM8K）差距更大</li>
+<li><strong>10@k vs pass@k</strong>：1M 采样下，只准提交 10 个解的 10@M ≈ <strong>30%</strong>，全部提交的 pass@M > <strong>40%</strong>——筛选/聚类阶段就是瓶颈；聚类能显著回补 10@k</li>
+</ul>
+
+<h2>2. 验证器在闭环的两个位置</h2>
+
+<pre><code>测试时：生成 → 验证器筛选 → 提交（best-of-n、10@k、聚类）
+训练时：生成 → 验证器打分 → 奖励 → 更新权重（STaR、RLVR）</code></pre>
+
+<p class="sidenote">验证是连接<strong>测试时扩展</strong>与<strong>训练时扩展</strong>的桥梁（<a href="../wiki/verification.md">wiki 页</a>）。同样的验证器，一个用来「选」，一个用来「教」。</p>
+
+<h2>3. 四类验证器</h2>
+
+<table>
+<tr><th>类型</th><th>判什么</th><th>优点</th><th>代价/短板</th><th>典型场景</th></tr>
+<tr><td><strong>符号/规则</strong></td><td>可验证领域：数学答案、单元测试、输出等价性</td><td>可靠、自动、廉价</td><td>仅限可验证领域</td><td>KernelBench、RLEF 执行反馈</td></tr>
+<tr><td><strong>ORM</strong> 结果奖励模型</td><td>最终答案整体打分</td><td>标注便宜（只要对/错）</td><td>信息粗，不知道错在哪</td><td>best-of-n 筛选、结果级 RL</td></tr>
+<tr><td><strong>PRM</strong> 过程奖励模型</td><td>推理每一步打分（过程监督）</td><td>细粒度，可早定位错误</td><td>步骤标注贵；自动标注有噪声</td><td>引导搜索、过程监督 RL</td></tr>
+<tr><td><strong>LLM-as-a-Judge</strong></td><td>开放式输出质量</td><td>灵活，无标准答案也能判</td><td>主观、贵、可靠性存疑</td><td>写作/设计等开放任务</td></tr>
+</table>
+
+<h3>3.1 ORM vs PRM</h3>
+
+<table>
+<tr><th>维度</th><th>ORM</th><th>PRM</th></tr>
+<tr><td>粒度</td><td>结果级（一个分）</td><td>步骤级（每步一分）</td></tr>
+<tr><td>标注成本</td><td>低（答案对错即可）</td><td>高（PRM800K ≈ 80 万步骤标注）</td></tr>
+<tr><td>信息量</td><td>知道「错」，不知道「哪错」</td><td>能定位「哪一步开始错」</td></tr>
+<tr><td>用法</td><td>候选整体排序</td><td>测试时引导 + 训练时细粒度奖励</td></tr>
+</table>
+
+<p class="sidenote">相关术语见<a href="0001-self-improving-agents-glossary.html">词汇表</a>：结果奖励模型 / 过程奖励模型 / 过程监督。</p>
+
+<h2>4. Math-Shepherd：自动步骤标注</h2>
+
+<p><strong>关键：不是回看，是重跑。</strong>标注对象是<em>每条轨迹的每个中间步骤</em>（包括最终算错的轨迹），做法是<em>以该步骤为前缀重新生成 N 条完整解</em>，用规则验证器（如数学答案）判定每条的最终对错。例：步骤 s₁「15+20=35」的 N=3 条续跑中 1 条最终做对 → 软估计 1/3，硬估计 1。训练 PRM：输入前缀，预测最终做对概率。</p>
+
+<p class="sidenote">因此「最终答案正确 ≠ 每一步都对」——错步可能被后续采样救回（虚高分），对步也可能重跑全错（靠运气）。这正是自动标注噪声的来源（<a href="../wiki/math-shepherd.md">wiki 页</a>）。</p>
+
+<p class="sidenote">N 是<strong>数据构建</strong>超参数（不是训练优化超参数）：主实验用 completer（LLemma-7B）为每个步骤补全 <code>N=8</code> 条轨迹；消融实验显示 <code>N=4</code> 时硬估计标签准确率最高（86%），N 继续增大硬估计因假阳性反而下降，软估计则随 N 增大更贴合人工分布（但两者训出的 verifier 差异不大）。选硬估计是工程原因——可用标准 LM 管线（两个特殊 token 表「有潜力/无潜力」）。代价：补全计算随 N 线性增长（论文 Limitations）。无需人工标注即超越 SC/ORM/PRM800K；已知局限：难题信号不足、中间错误被后续掩盖、非常规路径被低估。<a href="https://arxiv.org/abs/2312.08935">arXiv:2312.08935</a> §4–5</p>
+
+<h2>5. 为什么可验证领域自进化最成熟</h2>
+
+<blockquote>
+<p>验证机制必须<strong>比生成任务本身更简单</strong>，才能在无需人工逐项检查的前提下大规模筛选正确样本。</p>
+</blockquote>
+
+<p>数学（形式化证明）、编程（单元测试/执行反馈）、语言转换（输入输出等价性）都满足这一点——于是「生成 → 验证 → 筛选 → 更新」的闭环能可靠运转，训练时扩展因此在数学上特别有效（GPT-3.5 AIME ≈ 5% → DeepSeekMath-7B 通过训练时扩展达 51.7%+）。</p>
+
+<hr>
+<p class="sidenote">依据：<a href="../wiki/generation-verification-gap.md">生成-验证差距</a>、<a href="../wiki/verification.md">验证</a>、<a href="../wiki/verifiable-domains.md">可验证领域</a>、<a href="../wiki/process-reward-model.md">过程奖励模型</a>；课程第 3 讲 <em>Robust Verification</em>。</p>
+</main>
+</body>
+</html>

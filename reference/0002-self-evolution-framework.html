@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自进化框架速查卡：闭环 · 四问题 · 三标准</title>
+<link rel="stylesheet" href="../assets/shared.css">
+</head>
+<body>
+<main>
+<h1>自进化框架速查卡</h1>
+<p class="meta">第 1 课配套参考 · 后续课程会反复回看 · 打印友好</p>
+<p class="lead">把课程主线与 Gao et al. 综述框架合成一张卡片：闭环看「怎么转」，四问题看「往哪问」，三标准看「是不是真自进化」。</p>
+
+<h2>1. 自进化闭环</h2>
+
+<p><strong>抽象四步</strong>（本工作区术语基线）：<code>生成 → 验证 → 反馈 → 更新</code>。</p>
+
+<p><strong>课程实例</strong>（CS329A 第 2 讲）：<code>生成 → 验证 → 学习 → 搜索</code>——模型生成候选解 → 验证器打分 → 反馈转为奖励信号 → 强化学习更新策略 → 推理时搜索探索更优候选。<a href="../wiki/self-improving-ai-agents.md">wiki/self-improving-ai-agents</a></p>
+
+<h2>2. 四问题框架</h2>
+
+<table>
+<tr><th>维度</th><th>问题</th><th>分类</th><th>代表</th></tr>
+<tr><td><strong>What</strong></td><td>改什么（演化位点）</td><td>模型参数 / 上下文（提示+记忆）/ 工具集 / 架构拓扑</td><td>STaR（模型）、prompt 优化（上下文）、技能库（工具）、搜索管线（架构）</td></tr>
+<tr><td><strong>When</strong></td><td>何时改（时序）</td><td>测试内 / 测试间（见 §2.1）</td><td>LATS（测试内）、GRPO（测试间）</td></tr>
+<tr><td><strong>How</strong></td><td>怎么改（机制）</td><td>奖励驱动 / 模仿演示 / 种群演化</td><td>RLVR（奖励）、回溯修正（模仿）、AlphaEvolve（种群）</td></tr>
+<tr><td><strong>Where</strong></td><td>何处用（领域）</td><td>通用 / 领域专用（编码、GUI、金融、医学、教育）</td><td>AlphaCode（编码）</td></tr>
+</table>
+
+<h3>2.1 测试内 vs 测试间：怎么分</h3>
+
+<p>判据只有一个：<strong>学习相对于任务执行的时序</strong>——任务进行中发生的适应是「测试内」，任务与任务之间发生的持久更新是「测试间」。（综述 §4：intra = <em>occurs during task execution</em>；inter = <em>occurs between task completions</em>）</p>
+
+<table>
+<tr><th>维度</th><th>测试内 intra</th><th>测试间 inter</th></tr>
+<tr><td>时序</td><td>任务执行中，实时（在线）</td><td>任务完成后，回顾式</td></tr>
+<tr><td>数据</td><td>当前任务实时产生的反馈</td><td>积累的轨迹 / 奖励 / 经验</td></tr>
+<tr><td>优化目标</td><td>当前这道题的表现</td><td>未来一系列任务的表现</td></tr>
+<tr><td>典型机制</td><td>ICL：自我反思 + 任务内记忆缓冲</td><td>SFT / RL；也可 ICL（上次经验作下文）</td></tr>
+<tr><td>效果持久性</td><td>任务结束即失效（除非写回持久层）</td><td>跨任务保留（权重 / 技能库 / 记忆库）</td></tr>
+<tr><td>CS329A 对应</td><td>测试时扩展方向（当其含经验反馈时）</td><td>训练时扩展（train-time scaling）</td></tr>
+<tr><td>代表系统</td><td>Self-Refine / Reflexion（反思重试）、LATS 任务内搜索、LADDER（测试内 RL）</td><td>STaR / Quiet-STaR、SELF、GRPO、DAPO、WebRL</td></tr>
+</table>
+
+<p class="sidenote">两个易错点：① <strong>机制 ≠ 时序</strong>——ICL 也有「测试间」用法（把上次经验归纳为工作流并注入下文），RL 也有「测试内」用法（LADDER 对单难题做目标 RL），判别只看时序。② <strong>测试时计算扩展 ≠ 测试内自进化</strong>——纯采样+筛选（best-of-n、AlphaCode 提交筛选）不改任何行为，是"算力换答案"；有反思/反馈驱动的行为修改才算演化。</p>
+
+<p class="sidenote">来源：Gao et al. <a href="https://arxiv.org/abs/2507.21046">arXiv:2507.21046</a> §1、§4。</p>
+
+<h2>3. 三标准（操作性定义）</h2>
+
+<p><strong>定义：</strong>自进化 agent 是<strong>基于自身轨迹或反馈信号，修改其内部参数、上下文状态、工具集或架构拓扑，且明确以提升未来性能为目标</strong>的 agent（Gao et al. §2.1）。</p>
+
+<p>这一定义蕴含三条纳入标准（要算「真自进化」，三条都满足）：</p>
+
+<table>
+<tr><th>#</th><th>标准</th><th>含义</th><th>反例</th></tr>
+<tr><td><strong>(i)</strong></td><td>经验驱动</td><td>更新由自身轨迹、自生成数据或环境反馈驱动，针对能力边界，而非通用数据合成</td><td>仅按人工静态数据集微调</td></tr>
+<tr><td><strong>(ii)</strong></td><td>持久效果</td><td>产生持久的、改变策略的作用，而非一次性执行的临时行为</td><td>仅对话内临时改 prompt</td></tr>
+<tr><td><strong>(iii)</strong></td><td>自主探索</td><td>具备自主探索或自发学习的机制（自我反思、主动结构化修改）</td><td>完全由外部排程触发的原型</td></tr>
+</table>
+
+<p class="sidenote">连续光谱：proto-evolution（迭代 bootstrap、反馈驱动提示）→ strong self-evolution（完全自主诊断与重配置）；综述不设硬性边界。</p>
+
+<h2>4. 形式化（一行版）</h2>
+
+<pre><code>Π_{j+1} = f(Π_j, τ_j, r_j)  目标：max_f Σ U(Π_j, T_j)</code></pre>
+
+<p class="sidenote">Π 智能体系统，τ 轨迹，r 反馈，f 自进化策略，U 效用；改来改去都是为了下一轮任务表现更好（Gao et al. §2.1）。</p>
+
+<h2>5. 已知系统的标签</h2>
+
+<p>第 1 课练习归纳（各系统详情见 wiki 页）：</p>
+
+<table>
+<tr><th>系统</th><th>What</th><th>When</th><th>How</th></tr>
+<tr><td>STaR</td><td>模型参数</td><td>inter-test-time</td><td>模仿演示（自生成正确推理）</td></tr>
+<tr><td>AlphaCode</td><td>模型（GOLD 微调）+ 架构（采样-筛选管线）</td><td>inter（微调）；推理时采样属测试时扩展，而非演化</td><td>奖励驱动（验证器筛选）</td></tr>
+<tr><td>LATS</td><td>上下文（搜索树状态）</td><td>intra-test-time（任务内搜索+反思）</td><td>奖励驱动（LLM 裁判）</td></tr>
+<tr><td>DeepSeekMath GRPO</td><td>模型参数</td><td>inter-test-time</td><td>奖励驱动（RLVR）</td></tr>
+</table>
+
+<hr>
+<p class="sidenote">术语遵循 <a href="0001-self-improving-agents-glossary.html">词汇表</a>；框架依据 <a href="https://arxiv.org/abs/2507.21046">Gao et al. 2025</a> §1–4 与 CS329A 第 2 讲（本地 <a href="../wiki/self-improving-ai-agents.md">wiki 页</a>）。</p>
+</main>
+</body>
+</html>

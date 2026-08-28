@@ -14,7 +14,7 @@
 ### 综述（领域地图）
 
 - [Gao et al., "A Survey of Self-Evolving Agents: What, When, How, and Where to Evolve on the Path to Artificial Super Intelligence" (arXiv:2507.21046)](https://arxiv.org/abs/2507.21046)
-  领域第一份系统综述（TMLR 2026）。给出自进化三判定标准（经验驱动、持久效果、自主探索）与四问题分类法（what/when/how/where）。用于：领域框架的权威依据。
+  领域第一份系统综述（TMLR 2026，在线全文版 https://arxiv.org/html/2507.21046v4 含 §2.1 操作性定义）。给出自进化三判定标准（经验驱动、持久策略改变、自主探索）与四问题分类法（what/when/how/where）。用于：领域框架的权威依据。
 - [Fang et al., "A Comprehensive Survey of Self-Evolving AI Agents" (arXiv:2508.07407)](https://arxiv.org/abs/2508.07407)
   提出 I-A-E-O 框架（输入-智能体-环境-优化器）与自进化三定律（Endure/Excel/Evolve）。用于：补充系统视角与安全约束。
 - [Jiang et al., "Adaptation of Agentic AI: A Survey of Post-Training, Memory, and Skills" (arXiv:2512.16301)](https://arxiv.org/abs/2512.16301)
