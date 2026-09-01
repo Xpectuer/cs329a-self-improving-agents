@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>自进化框架速查卡：闭环 · 四问题 · 三标准</title>
 <link rel="stylesheet" href="../assets/shared.css">
+<script src="../assets/mathjax-config.js"></script>
+<script id="MathJax-script" src="../assets/vendor/mathjax/tex-svg.js" async></script>
 </head>
 <body>
 <main>
@@ -64,7 +66,7 @@
 
 <h2>4. 形式化（一行版）</h2>
 
-<pre><code>Π_{j+1} = f(Π_j, τ_j, r_j)  目标：max_f Σ U(Π_j, T_j)</code></pre>
+<p>$$\Pi_{j+1} = f(\Pi_j, \tau_j, r_j), \quad \max_f \sum_j U(\Pi_j, T_j)$$</p>
 
 <p class="sidenote">Π 智能体系统，τ 轨迹，r 反馈，f 自进化策略，U 效用；改来改去都是为了下一轮任务表现更好（Gao et al. §2.1）。</p>
 

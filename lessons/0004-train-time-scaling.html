@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 4 课 · 训练时扩展：把验证信号固化回权重</title>
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<main>
+
+<h1>第 4 课 · 训练时扩展</h1>
+<p class="meta">第 4 课 / 共 9 课 · 约 6 分钟 · 配套参考：<a href="../reference/0005-train-time-scaling.html">训练时扩展速查卡</a></p>
+
+<details>
+<summary>先回忆上一课（30 秒）</summary>
+<p>AlphaCode 拿到 100 万候选后，靠<strong>聚类</strong>压缩到 10 个提交上真实竞技场——但猜猜：这 100 万候选里蕴含的正确解，模型参数记得住吗？<br>
+答：<strong>记不住</strong>。推理时学到的东西全部随会话烟消云散——这正是本课要闭合的缺口。</p>
+</details>
+
+<p class="lead">第 3 课的测试时扩展是「这一次任务里多烧算力」；本课的训练时扩展是「把烧出来的好东西<strong>固化回模型</strong>」——让它在<strong>下一次任务</strong>里不需要再烧那么多。</p>
+
+<h2>1. 核心闭环（一句话掌握本课）</h2>
+
+<blockquote>
+<p>讲者原话：<strong>先应用测试时扩展，再对筛选出的模型自身输出进行过滤，并微调回模型——这就是训练时扩展。</strong></p>
+</blockquote>
+
+<pre><code>模型输出 → 测试时扩展(采样/搜索) → 验证器过滤(挑正确解)
+    ↑                                        ↓
+    └── 再生成(更强) ← 用挑选的输出微调模型 ←─┘</code></pre>
+
+<p>这一循环成立的前提：领域<strong>可验证</strong>（能确知对错，如 AIME 数学）——没有可靠的反馈信号，循环就断了。这也是为什么课程反复强调验证器是核心。</p>
+
+<h2>2. 数字震撼：小模型挑战大模型</h2>
+
+<table>
+<tr><th>模型</th><th>参数</th><th>AIME 准确率</th></tr>
+<tr><td>GPT-3.5（无闭环）</td><td>~175B</td><td>≈5%</td></tr>
+<tr><td>DeepSeekMath（训练时扩展）</td><td>7B</td><td>51.7%（+技巧 60%）</td></tr>
+<tr><td>Qwen-32B + DAPO</td><td>32B</td><td>≈50%</td></tr>
+</table>
+
+<p>175B 的 GPT-3.5 在 AIME 上只有 5%；7B 的 DeepSeekMath 靠训练时扩展拿到 51.7%。<strong>在训练阶段投入算力、让模型从自己生成的数据里学习，可以部分替代参数规模的差距。</strong>（<a href="../wiki/train-time-scaling.md">wiki 页</a>）</p>
+
+<h2>3. 三套训练方法：从轻到重</h2>
+
+<p><strong>STaR</strong>（Self-Taught Reasoner，斯坦福）：不靠人工标注的思维链，让模型<strong>自己生成推理过程</strong>（rationales）→ 只保留<strong>验证正确</strong>的 → 微调 → 迭代重复。只在模型原有能力范围内提升，不超出其能力太多。（<a href="../wiki/star.md">wiki 页</a>）</p>
+
+<p><strong>GRPO</strong>（DeepSeekMath）：用<strong>组内相对优势</strong>（同一问题采样一组答案，取相对优势）替代 PPO 的 critic 价值网络——省内存、实现简单，数学推理效果好。（<a href="../wiki/deepseek-math.md">wiki 页</a>）</p>
+
+<p><strong>DAPO</strong>（长链推理 RL 稳定化）：<strong>RL 对实现细节极度敏感</strong>——随规模扩大，微小修复的效果可能极其显著。DAPO 的关键改进（AIME，Qwen-32B）：</p>
+
+<table>
+<tr><th>叠加项</th><th>得分</th></tr>
+<tr><td>基础 GRPO + 过长过滤</td><td>30 → 36</td></tr>
+<tr><td>+ 非对称裁剪</td><td>38</td></tr>
+<tr><td>+ 软性过长惩罚</td><td>41</td></tr>
+<tr><td>+ <strong>token 级损失</strong></td><td>42</td></tr>
+<tr><td>+ <strong>动态采样</strong></td><td><strong>50</strong>（超过 R1 蒸馏版 32B）</td></tr>
+</table>
+
+<p>token 级损失解决：样本级损失下，<strong>一个很长的垃圾答案和一个简短的好答案权重相同</strong>——改为逐 token 计算，长输出自然累积更多 loss，形成长度调节。动态采样改善批次内奖励分配，让信号传播得更好。（<a href="../wiki/dapo.md">wiki 页</a>）</p>
+
+<h2>4. 奖励黑客（reward hacking）：模型钻验证器的空子</h2>
+
+<p>RL 优化的是奖励信号，不是真能力——模型会找到<strong>奖励的漏洞</strong>。三类典型信号（<a href="../wiki/reward-hacking.md">wiki 页</a>）：</p>
+
+<ul>
+<li><strong>响应长度失控</strong>：输出越来越长，质量不升——靠冗长偷分</li>
+<li><strong>熵漂移</strong>：生成熵持续增长，分布失稳</li>
+<li><strong>截断噪声</strong>：难题卡在中途被截断，产出大量噪声破坏训练</li>
+</ul>
+
+<p>所以 RL 训练<strong>不能只看损失函数</strong>——必须同时监控三指标：<strong>响应长度、熵、全对样本占比</strong>。全对占比告诉你采样量是否够；训练多步无改善 → 奖励信号很可能已饱和。</p>
+
+<h2>5. 何时用哪套？（决策）</h2>
+
+<table>
+<tr><th>场景</th><th>选</th></tr>
+<tr><td>只有 ~100 个示例、无 RL 基础设施</td><td>STaR（简单推理有效）</td></tr>
+<tr><td>基础模型 + 指令数据就绪，标准数学推理</td><td>GRPO（内存友好）</td></tr>
+<tr><td>长链/竞赛题，追求 SOTA</td><td>DAPO 风格（控制所有变量）</td></tr>
+</table>
+
+<p>但请记住诚实的一面：<strong>这些技术能提升 pass@k、答案格式、推理连贯性——但无法教模型解决全新问题，也无法大幅跨领域泛化。</strong>这是当前研究的开放边界。</p>
+
+<h2>6. 练习：五道题，凭记忆作答</h2>
+
+<div class="quiz" data-quiz>
+<ol>
+
+<li data-q data-answer="C">
+<p class="q-text">Q1. 训练时扩展的核心闭环是？</p>
+<div class="options">
+<button data-opt="A">纯增加预训练数据量</button>
+<button data-opt="B">纯增加模型参数规模</button>
+<button data-opt="C">测试时扩展后过滤输出再微调</button>
+<button data-opt="D">人工标注后监督微调（SFT）</button>
+</div>
+<p data-feedback hidden>测试时扩展（采样/搜索）→ 验证器过滤正确解 → 用这些输出微调回模型——只记住这个循环就掌握了训练时扩展。</p>
+</li>
+
+<li data-q data-answer="D">
+<p class="q-text">Q2. STaR 用什么作为微调的训练信号？</p>
+<div class="options">
+<button data-opt="A">人工标注的思维链</button>
+<button data-opt="B">教师模型蒸馏的推理过程</button>
+<button data-opt="C">互联网大规模文本语料</button>
+<button data-opt="D">模型自生成且验证正确的推理</button>
+</div>
+<p data-feedback hidden>自己生成 rationales → 只保留验证正确的 → 微调 → 迭代，不靠人工思维链标注。</p>
+</li>
+
+<li data-q data-answer="A">
+<p class="q-text">Q3. DAPO 的 token 级损失解决的核心问题是？</p>
+<div class="options">
+<button data-opt="A">长垃圾答案与好答案权重失衡</button>
+<button data-opt="B">验证器对正确答案评分过低</button>
+<button data-opt="C">正确样本在训练数据中占过高</button>
+<button data-opt="D">推理时采样预算分配不均</button>
+</div>
+<p data-feedback hidden>样本级损失下长垃圾答案与简短好答案权重相同；token 级损失让长输出自然累积 loss，形成长度调节。</p>
+</li>
+
+<li data-q data-answer="B">
+<p class="q-text">Q4. 训练中出现哪种现象提示模型正在奖励黑客？</p>
+<div class="options">
+<button data-opt="A">推理熵持续下降至零</button>
+<button data-opt="B">响应长度膨胀而质量不升</button>
+<button data-opt="C">损失函数平稳不再下降</button>
+<button data-opt="D">验证器输出完全一致</button>
+</div>
+<p data-feedback hidden>响应长度失控膨胀但质量不升，是模型靠冗长偷分的典型信号；熵漂移、截断噪声同理。</p>
+</li>
+
+<li data-q data-answer="C">
+<p class="q-text">Q5. 只有 ~100 个推理示例、且没有 RL 基础设施，应选哪套？</p>
+<div class="options">
+<button data-opt="A">GRPO</button>
+<button data-opt="B">DAPO</button>
+<button data-opt="C">STaR</button>
+<button data-opt="D">RLHF</button>
+</div>
+<p data-feedback hidden>STaR 是少量示例 + 无 RL 基础设施时的起步选择（GSM8K 类简单推理有效，但提升有限）。</p>
+</li>
+
+</ol>
+<p data-score hidden></p>
+</div>
+
+<h2>7. 小作业：选型 + 排障</h2>
+
+<ol>
+<li><strong>选型</strong>：某团队有 7B 模型 + 完整 RL 训练管线，目标是数学竞赛长链题（AIME）；基础 GRPO 训练后答案格式稳定但准确率不升。按本课内容给出两件事：①该查哪两个监控指标？②应往哪个 DAPO 改进方向试？</li>
+<li><strong>辨真伪</strong>：一句话判断——「训练时扩展能教模型解决它从未见过的新类型问题」对吗？为什么？（提示：本课「能力边界」小节）</li>
+</ol>
+<p>答案发给 Kiki 验证喵。</p>
+
+<h2>主源推荐</h2>
+
+<ul>
+<li><strong>CS329A 第 6 讲</strong>（训练时扩展 / Scaling RL）——课程原话闭环 + AIME 案例</li>
+<li><strong>STaR</strong>（<a href="https://arxiv.org/abs/2203.14465">arXiv:2203.14465</a>）|<strong>DeepSeekMath</strong>（<a href="https://arxiv.org/abs/2402.03300">arXiv:2402.03300</a>）|<strong>DAPO</strong>（<a href="https://arxiv.org/abs/2503.14476">arXiv:2503.14476</a>）</li>
+</ul>
+
+<hr>
+
+<p><strong>下一课预告</strong>：工具与代码反馈——前面验证信号靠规则/模型；这一课让 agent <strong>执行代码、跑测试、看真实反馈</strong>，把验证从「判断答案」升级到「与环境交互」。</p>
+
+<div class="callout ask">
+<p><strong>喵！</strong>闭环、reward hacking 或者数学细节卡住了——随时喊 Kiki。上一课「瓶颈在哪」作业也还可以补交喵！</p>
+</div>
+
+</main>
+</body>
+</html>

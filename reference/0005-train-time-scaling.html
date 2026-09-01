@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>训练时扩展速查卡：STaR · GRPO · DAPO</title>
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="../assets/mathjax-config.js"></script>
+<script id="MathJax-script" src="../assets/vendor/mathjax/tex-svg.js" async></script>
+</head>
+<body>
+<main>
+<h1>训练时扩展速查卡</h1>
+<p class="meta">第 4 课配套参考 · 长链推理 RL 的三件事：闭环、监控、稳定化</p>
+<p class="lead">核心一句话：把「测试时扩展」那一步里被验证器挑中的输出，拿来微调回模型——训练时扩展。</p>
+
+<h2>1. 核心闭环</h2>
+<pre><code>模型输出 → 测试时扩展（采样/搜索）→ 验证器过滤（挑正确解）
+    ↑                                              ↓
+    └──── 再生成（更强）← 用挑选的输出微调模型 ←──────┘</code></pre>
+<p class="sidenote">讲者原话：先应用测试时扩展，再对筛选出的模型自身输出进行过滤并微调回模型。忘了其他内容，记住这个循环，就掌握了训练时扩展。</p>
+
+<h2>2. 三种训练范式</h2>
+<table>
+<tr><th>范式</th><th>做法</th></tr>
+<tr><td>预训练</td><td>互联网大规模数据，建立基础能力（第 1 讲）</td></tr>
+<tr><td>微调</td><td>RLHF / RLAIF，偏好数据对齐，得到聊天模型</td></tr>
+<tr><td>训练时扩展</td><td>在测试时扩展之上<strong>闭环</strong>：生成→过滤→训练→再生成</td></tr>
+</table>
+
+<h2>3. 三套训练方法怎么选</h2>
+<table>
+<tr><th>方法</th><th>适用</th><th>特点</th></tr>
+<tr><td><strong>STaR</strong></td><td>只有 ~100 个推理示例、无 RL 基础设施</td><td>自生成 rationales → 验证筛正确 → 迭代微调；简单任务（GSM8K）有效，提升有限</td></tr>
+<tr><td><strong>GRPO</strong>（DeepSeekMath）</td><td>基础模型 + 指令数据就绪，标准数学推理</td><td>组相对优势替代 critic；内存友好；AIME 51.7%（7B）</td></tr>
+<tr><td><strong>DAPO</strong></td><td>长链/竞赛级问题（AIME、IMO）</td><td>RL 细节敏感；token 级损失 + 渐进式截断惩罚 + 动态采样；Qwen-32B AIME 50%</td></tr>
+</table>
+
+<h2>4. DAPO：消融阶梯与关键机制</h2>
+<table>
+<tr><th>叠加项</th><th>得分</th></tr>
+<tr><td>基础 GRPO + 过长过滤</td><td>30 → 36</td></tr>
+<tr><td>+ 非对称裁剪</td><td>38</td></tr>
+<tr><td>+ 软性过长惩罚</td><td>41</td></tr>
+<tr><td>+ token 级损失</td><td>42</td></tr>
+<tr><td>+ 动态采样</td><td><strong>50</strong>（超过 R1 蒸馏 Qwen-32B）</td></tr>
+</table>
+<h3>4.1 序列级 vs Token 级损失（为什么长答案与短答案等权）</h3>
+<p>标准 GRPO 实现（verl <code>seq-mean-token-mean</code> / OpenRLHF <code>token_level_loss=False</code>）按<strong>序列</strong>归一化——每个序列权重相同，与长度无关：</p>
+<p>$$L_{\text{seq}} = \frac{1}{B}\sum_{i=1}^{B}\left(\frac{1}{T_i}\sum_{t=1}^{T_i}\ell_{i,t}\right)$$</p>
+<p>DAPO 改为按<strong>token</strong>归一化（verl <code>token-mean</code> / OpenRLHF <code>token_level_loss=True</code>）——每个激活 token 同权，序列影响力 ∝ 它的 token 数：</p>
+<p>$$L_{\text{dapo}} = \frac{\sum_{i=1}^{B}\sum_{t=1}^{T_i}\ell_{i,t}}{\sum_{i=1}^{B}T_i}$$</p>
+<div class="callout note">
+<p><strong>📔 NOTE · 逐符号拆解 DAPO 损失</strong></p>
+<p>$$L_{\text{dapo}} = \frac{\sum_{i=1}^{B}\sum_{t=1}^{T_i}\ell_{i,t}}{\sum_{i=1}^{B}T_i}$$</p>
+<table>
+<tr><th>符号</th><th>含义</th></tr>
+<tr><td>$L_{\text{dapo}}$</td><td>整个 batch 的聚合损失——<strong>每个激活 token 平均</strong>后的损失（标量）</td></tr>
+<tr><td>$B$</td><td>batch 内序列总数（每个问题采样多条回答，拼成一个组）</td></tr>
+<tr><td>$i$</td><td>序列下标，$1 \le i \le B$</td></tr>
+<tr><td>$t$</td><td>token 下标，$1 \le t \le T_i$</td></tr>
+<tr><td>$T_i$</td><td>第 $i$ 条序列的<strong>有效响应 token 数</strong>（response mask 激活部分；不含 prompt 前缀）</td></tr>
+<tr><td>$\ell_{i,t}$</td><td>第 $i$ 条序列第 $t$ 个 token 的<strong>裁剪策略梯度项</strong>（PPO 式）：</td></tr>
+<tr><td>$\ell_{i,t}$ 展开</td><td>$$-\min\!\left(r_{i,t}A_i,\ \operatorname{clip}(r_{i,t},1-\varepsilon,1+\varepsilon)\,A_i\right)$$<br>取 $\min$ 是为了在旧/新策略差距过大时「截断」更新幅度，防止训练爆炸</td></tr>
+<tr><td>$r_{i,t}$</td><td>重要性比率：$\pi_\theta(o_{i,t}\mid \cdot)\big/\pi_{\theta_{\mathrm{old}}}(o_{i,t}\mid \cdot)$ —— 新旧策略在 token $t$ 上的概率比</td></tr>
+<tr><td>$\varepsilon$</td><td>裁剪半径（通常 0.2）：允许策略单步更新的最大偏离比例</td></tr>
+<tr><td>$A_i$</td><td>第 $i$ 条序列的<strong>组相对优势</strong>（GRPO：$(r_i-\bar r)/\sigma_r$，组内归一化）——<strong>序列级标量</strong>，广播到该序列所有 token；DAPO 不提供逐 token 信用分配</td></tr>
+<tr><td>分子 $\sum_{i=1}^{B}\sum_{t=1}^{T_i}$</td><td>batch 内所有序列、所有 token 的损失<strong>总和</strong></td></tr>
+<tr><td>分母 $\sum_{i=1}^{B}T_i$</td><td>总激活 token 数——<strong>用 token 总数而非序列数 $B$ 归一化，正是「每个 token 等权」的关键</strong>：序列影响力 ∝ 它的 token 数（长序列主导聚合）</td></tr>
+</table>
+</div>
+<p><strong>数字例子</strong>：10 token 好答案（均值损失 $1.0$）+ 100 token 胡扯长答案（均值损失 $0.2$）→ 序列级 $= (1.0+0.2)/2 \approx 0.6$（等权）；token 级 $= (10\times 1.0 + 100\times 0.2)/110 \approx 0.273$（长序列主导聚合）。</p>
+<p class="sidenote">⚠️ 两条易混轴：① <strong>loss 聚合层级</strong>——DAPO 改的是这个（loss reduction）；② <strong>逐 token 信用分配</strong>——DAPO <em>未</em>提供（奖励仍是序列级标量 A_i，广播到该序列全部 token；那是 PRM/过程奖励的事，见速查卡 0003）。</p>
+<p class="sidenote">实践后果：序列级下模型发现「堆废话不改变序列权重、还能摊薄每 token 梯度」→ 长度膨胀信号被稀释，助长 reward hacking；token 级让每个废话 token 实打实承担梯度 → 天然抑制长度失控。单开 token 级不够，需与非对称裁剪、软超长惩罚、动态采样配合（见上表）。</p>
+
+<h2>5. RL 训练必须监控的三个指标</h2>
+<ol>
+<li><strong>响应长度</strong>：持续膨胀但质量不升 → 奖励被 hack / 靠冗长偷分</li>
+<li><strong>熵</strong>：太低 = 坍缩；太高 = 不稳定失控</li>
+<li><strong>全对样本占比</strong>：决定需要多少采样；训练多步无改善 → 奖励可能已饱和</li>
+</ol>
+<p class="sidenote">损失函数本身不是充分的代理指标——必须同时看这三个。</p>
+
+<h2>6. 能力边界（诚实面）</h2>
+<ul>
+<li>✅ 提升 pass@k · 改善答案格式 · 增强多步推理连贯性</li>
+<li>❌ 无法提升根本能力 · 无法解决全新问题 · 无法大幅跨领域泛化</li>
+</ul>
+
+<h2>7. 关键数字锚点</h2>
+<table>
+<tr><th>模型</th><th>参数</th><th>AIME 2024/2025</th></tr>
+<tr><td>GPT-3.5</td><td>~175B</td><td>≈5%</td></tr>
+<tr><td>DeepSeekMath（训练时扩展）</td><td>7B</td><td>51.7%（+技巧 60%）</td></tr>
+<tr><td>Qwen-32B + DAPO</td><td>32B</td><td>≈50%</td></tr>
+</table>
+<p class="sidenote">训练时算力投入可部分**替代**参数规模——小模型在特定基准上超越大模型。</p>
+
+<hr>
+<p class="sidenote">依据：<a href="../wiki/train-time-scaling.md">train-time-scaling</a>、<a href="../wiki/dapo.md">dapo</a>、<a href="../wiki/star.md">star</a>、<a href="../wiki/deepseek-math.md">deepseek-math</a>、<a href="../wiki/reward-hacking.md">reward-hacking</a>；论文：STaR arXiv:2203.14465、DeepSeekMath arXiv:2402.03300、DAPO arXiv:2503.14476。</p>
+</main>
+</body>
+</html>

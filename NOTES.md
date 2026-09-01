@@ -23,3 +23,20 @@
 - 第 2 课 quiz 答案分布：B/A/C/B/A（5 题，80% 通过线 = 4/5）。
 - 第 2 课开头加了 30 秒检索练习（回顾第 1 课闭环+when 判据，details 折叠）——spacing/retrieval 策略。
 - 用户未完成第 1 课 quiz/作业即推进第 2 课：已温和提醒可回头补做；若持续跳过练习，下课后调成「quiz 优先」节奏。
+- **第 3 课已建**：`lessons/0003-test-time-compute-scaling.html`（四指标 pass@k/10@k/best-of-n/SC + LLM Monkeys 对数线性律 + 多数投票饱和 + AlphaCode 语义聚类 + 选择器决策），配套参考 `reference/0004-test-time-scaling.html`。
+- 第 3 课 quiz 答案分布：B/C/A/A/B（5 题，80% 通过线 = 4/5）。用户 **5/5** 通过；作业「瓶颈在哪」未交即推进。
+- **课间迁移问答已答**（用户问 Claude Code/Codex/DSH/API 的测试时扩展实例）：判别卡=不动权重+多烧推理算力；CLAUDE.md 教训写回=跨任务演化非测试时扩展；reasoning_effort 为显式预算产品化；已下「迁移挑战」作业（找一处 TTCS 实例）。
+- **第 4 课已建**：`lessons/0004-train-time-scaling.html`，配套 `reference/0005-train-time-scaling.html`。
+- 第 4 课 quiz 答案分布：C/D/A/B/C（5 题）。题库模式：L1 C/B/D/B/C → L2 B/A/C/B/A → L3 B/C/A/A/B → L4 C/D/A/B/C。
+- 用户第 2 课 quiz 5/5、第 3 课 quiz 5/5；第 1 课 quiz 仍未做。
+- **第 3 课作业补交**（2026-08-31）：①「瓶颈在哪」✅ 满分（筛选能力 vs 生成能力判断链清晰）；②「两个改进方案」用户忘记，已补讲（语义聚类 + 增强验证器重排；加采样非主方向）。点评已入 learning-records/0004。
+- **第 4 课小作业已交**（2026-09-01）：选型题答对一半（响应长度 ✓，缺「全对占比」指标）；辨真伪结论对（不能）但理由混淆「搜索空间内固化」≠「边界外创造」，已修正。点评同入 0004。第 4 课 quiz 仍待报分。
+- **第 4 课 quiz 3/5 未通过**（2026-09-01，通过线 4/5）：已下发 5 题复习线索（不泄答案），等重答报分。learning-record 0005 待通过后写。
+## 技术约定（2026-09-01）
+
+- **公式渲染一律用 LaTeX + MathJax**：`assets/mathjax-config.js`（配置）+ `assets/vendor/mathjax/tex-svg.js`（本地化渲染器，2.1MB，勿删/勿改 CDN）。行内 `$...$`，块级 `$$...$$`。
+- **禁止在正文/速查卡用 Unicode 符号冒充公式**（如 Σ、ℓ 的直接文本写法）——符号表、sidenote 里的自然语言符号说明除外（如「Π 智能体系统」）。
+- 页面挂接模板（放在 `</head>` 前）：
+  `<script src="../assets/mathjax-config.js"></script>` + `<script id="MathJax-script" src="../assets/vendor/mathjax/tex-svg.js" async></script>`
+- **NOTE 卡片**用 `.callout.note`（蓝，`assets/shared.css` 已定义；与 `.callout.win`/`.callout.ask` 同构）：适合公式逐符号拆解、易混淆点警示。
+- 验证方式：改完公式后用浏览器打开对应 html，检查 `mjx-container` 存在且无裸 Unicode 残留（TreeWalker 遍历非 mjx 文本）。
