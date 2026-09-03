@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 5 课 · 工具与代码反馈：执行是更好的验证</title>
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="../assets/mathjax-config.js"></script>
+<script id="MathJax-script" src="../assets/vendor/mathjax/tex-svg.js" async></script>
+<script src="../assets/quiz.js" defer></script>
+</head>
+<body>
+<main>
+
+<h1>第 5 课 · 工具与代码反馈</h1>
+<p class="meta">第 5 课 / 共 9 课 · 约 6 分钟 · 配套参考：<a href="../reference/0006-tools-and-code-feedback.html">工具与代码反馈速查卡</a></p>
+
+<details>
+<summary>先回忆上一课（30 秒）</summary>
+<p>DAPO 为了稳定长链 RL，把损失从<strong>样本级</strong>改为<strong>token 级</strong>——哪句能复述「为什么长垃圾答案与短正确答案等权」？<br>
+答：样本级损失下每条序列权重 $1/B$ 与长度无关；token 级按总 token 数归一化，序列影响力 ∝ 长度。</p>
+</details>
+
+<p class="lead">前四课的验证器都是「<strong>判词</strong>」（看答案、打分数）。这一课的关键跃迁：让模型<strong>执行动作</strong>，用真实环境结果做反馈——验证从「判断」升级为「<strong>行为</strong>」。</p>
+
+<h2>1. 工具调用：从生成器到智能体</h2>
+
+<p>LLM 只会生成文本；<strong>带工具的智能体</strong>（agent）可以：调用代码解释器、搜索引擎、外部 API、模拟器——执行动作、读取结果、多步迭代。课程定义：<strong>智能体是 LLM 的泛化——有目标，能与环境交互，收集反馈并据此纠正自己的步骤</strong>。（<a href="../wiki/tool-calling.md">wiki 页</a>）</p>
+
+<p>工具的价值：它把「生成-验证差距」的验证环节变成<strong>动态可得</strong>的——不是事后判断答案对不对，而是让程序<strong>真的跑起来</strong>看结果。符号技术（如形式化工具）也属于工具使用，且是合成数据的重要来源。</p>
+
+<h2>2. 执行反馈：最强验证器</h2>
+
+<p>在可验证领域，验证机制有一个共同特征：<strong>比生成任务本身更简单</strong>。（<a href="../wiki/verifiable-domains.md">wiki 页</a>）</p>
+
+<table>
+<tr><th>领域</th><th>验证器</th></tr>
+<tr><td>数学</td><td>形式化证明（Lean）——机械严谨，逐步校验</td></tr>
+<tr><td>编程</td><td><strong>单元测试</strong>——写测试比写程序简单</td></tr>
+<tr><td>语言转换</td><td>输入/输出<strong>等价性</strong>（AI-as-a-Compiler：PyTorch→CUDA，KernelBench 上覆盖率随采样<strong>线性增长</strong>）</td></tr>
+</table>
+
+<p>代码反馈是执行反馈的代表。它有两种用法（注意区分）：</p>
+
+<ol>
+<li><strong>筛选用</strong>：跑测试 → 保留通过候选（第 3 课 AlphaCode 流程）</li>
+<li><strong>学习信号用</strong>：执行结果作为奖励喂 RL——<strong>RLEF</strong>（Reinforcement Learning from Execution Feedback）把「运行代码/跑测试」从<strong>判别器</strong>升级为<strong>引导信号</strong>，让模型学会生成「真正能运行、测试通过」的代码（<a href="../wiki/rlef.md">wiki 页</a>）</li>
+</ol>
+
+<h2>3. 智能体搜索：搜索空间从「代码」到「轨迹」</h2>
+
+<p>课程把搜索分为两类（<a href="../wiki/agent-search.md">wiki 页</a>）：</p>
+
+<ul>
+<li><strong>代码模型搜索</strong>：大量采样 + 筛选（AlphaCode / AlphaCode 2）——面向代码生成</li>
+<li><strong>深度研究式（agent search）</strong>：在<strong>动作/轨迹</strong>空间搜索——面向长时程多步任务（对应作业三）</li>
+</ul>
+
+<p>两者的共同点：模型已经把解蕴含在搜索空间里，关键是如何<strong>策展</strong>出答案。LATS 是智能体搜索的算法实例。</p>
+
+<h2>4. LATS：把 MCTS 引入 LLM 推理路径</h2>
+
+<p>LATS（<a href="https://arxiv.org/abs/2310.04406">arXiv:2310.04406</a>）将<strong>蒙特卡洛树搜索（MCTS）</strong>引入 LLM 多步推理，把推理、行动、规划统一在同一个<strong>测试时搜索</strong>框架中（<a href="../wiki/lats.md">wiki 页</a>）：</p>
+
+<ol>
+<li><strong>选择</strong>：UCT 平衡探索/利用，选扩展节点</li>
+<li><strong>扩展</strong>：采样多个候选行动，<strong>并行执行</strong>，观测追加上下文</li>
+<li><strong>评估</strong>：$\text{分数} = s_{LM} + \lambda\, s_{SC}$——LLM-as-Judge 打分 + 自洽性频率分数（行动越常被采样，分数越高）</li>
+<li><strong>模拟</strong>：从最高分状态贪心推进至终点/预算</li>
+<li><strong>反向传播</strong>：结果回传，更新路径分数</li>
+<li><strong>反思</strong>：对成败轨迹生成解释，回喂后续搜索</li>
+</ol>
+
+<p>效果：HotPotQA / WebShop 上<strong>无需微调</strong>即接近人类专家水平。<strong>⚠️ 限制</strong>：隐含假设行动可逆（交易/支付等不可逆场景慎用）；每次扩展/回传都烧大量测试时计算，论文未做成本-收益系统分析。</p>
+<div class="callout note">
+<p><strong>💡 追问：共享资源的互斥环境怎么办？</strong>树搜索从父状态分岔，靠的是「执行 $a_1$ → 回到父状态 → 再执行 $a_2$」——所以真正的地基假设是<strong>环境可回放</strong>（可重置 / 无副作用），比「可逆」更强。模拟器、检索、沙箱都满足；真实物理资源（如一台设备一次只能被一个操作占用）不满足，LATS 原版未处理。<strong>三问判别</strong>：①可重置？②可逆？③冲突可观察？「否」越多，越需要适配：建模进状态 / 分层执行 / 换世界模型 → 详见<a href="../reference/0006-tools-and-code-feedback.html#lats-limits">速查卡 §6.1</a>。</p>
+</div>
+
+<h2>5. 闭环对接：工具是验证器，也是学习信号</h2>
+
+<blockquote>
+<p>「生成 → <strong>验证（执行反馈）</strong> → 学习（RLEF/RL） → 搜索（LATS）」——三步共用同一把反馈，这正是第 2 讲「通过搜索实现自我改进」在工具层的落地。</p>
+</blockquote>
+
+<p>值得记住的脉络：数学/编程为什么是自进化最先成熟的领域？因为<strong>执行反馈自动、可靠、低成本</strong>——验证器比生成简单，闭环才跑得动。</p>
+
+<h2>6. 练习：五道题，凭记忆作答</h2>
+
+<div class="quiz" data-quiz>
+<ol>
+
+<li data-q data-answer="D">
+<p class="q-text">Q1. 工具调用让智能体获得的核心能力是？</p>
+<div class="options">
+<button data-opt="A">模型参数自动更新</button>
+<button data-opt="B">生成文本速度更快</button>
+<button data-opt="C">训练数据自动扩充</button>
+<button data-opt="D">执行动作获取反馈</button>
+</div>
+<p data-feedback hidden>工具调用让模型执行动作、读取环境结果，形成多步迭代——智能体与纯生成模型的分界。</p>
+</li>
+
+<li data-q data-answer="C">
+<p class="q-text">Q2. 执行反馈「最强」的验证器特征是？</p>
+<div class="options">
+<button data-opt="A">模型拥有更大参数量</button>
+<button data-opt="B">推理时使用更多步骤</button>
+<button data-opt="C">验证比生成任务简单</button>
+<button data-opt="D">提示词经过巧妙设计</button>
+</div>
+<p data-feedback hidden>可验证领域的共同点：验证机制比生成简单——才能大规模自动化筛选，否则只是把难题换个地方。</p>
+</li>
+
+<li data-q data-answer="B">
+<p class="q-text">Q3. RLEF 把执行反馈用作？</p>
+<div class="options">
+<button data-opt="A">人类专家迭代审查</button>
+<button data-opt="B">强化学习奖励信号</button>
+<button data-opt="C">预训练阶段的语料</button>
+<button data-opt="D">推理时上下文压缩</button>
+</div>
+<p data-feedback hidden>RLEF = Reinforcement Learning from Execution Feedback：跑代码/跑测试的结果作为 reward，把验证从判别器升级为训练信号。</p>
+</li>
+
+<li data-q data-answer="D">
+<p class="q-text">Q4. 智能体搜索（agent search）的搜索空间是？</p>
+<div class="options">
+<button data-opt="A">模型参数规模</button>
+<button data-opt="B">提示文本长度</button>
+<button data-opt="C">训练数据分布</button>
+<button data-opt="D">动作轨迹空间</button>
+</div>
+<p data-feedback hidden>区别于代码模型搜索（大量采样候选代码），智能体搜索面向深度研究式长任务，在动作/轨迹空间搜索（LATS 代表）。</p>
+</li>
+
+<li data-q data-answer="B">
+<p class="q-text">Q5. LATS 评估阶段合成状态分数的两来源是？</p>
+<div class="options">
+<button data-opt="A">人工评分和机器评分</button>
+<button data-opt="B">裁判打分与自洽频率</button>
+<button data-opt="C">验证器和你监督微调</button>
+<button data-opt="D">奖励模型和约束规则</button>
+</div>
+<p data-feedback hidden>评估 = LLM-as-Judge 打分 + 自洽性分数（行动被采样越多，分数越高）——状态价值由「看」和「频」共同决定。</p>
+</li>
+
+</ol>
+<p data-score hidden></p>
+</div>
+
+<h2>7. 小作业：设计一个「执行反馈闭环」</h2>
+
+<p>给你一个真实场景：一个 AI 助手被要求把 Python 脚本重写为 CUDA 内核。请用本课的组件画出一条闭环：</p>
+<ol>
+<li>用哪种验证器？为什么比写代码本身更简单？</li>
+<li>「筛选」与「学习」两种用法分别怎么落地？（提示：分别对应课程里的哪篇/哪个方法）</li>
+<li>如果要求不可逆操作（如自动下单支付），LATS 为什么慎用？</li>
+</ol>
+<p>答案发给 Kiki 验证喵。</p>
+
+<h2>主源推荐</h2>
+
+<ul>
+<li><strong>CS329A 第 5 讲</strong>（工具与代码反馈 / 智能体工作流）——工具化与执行反馈的主线</li>
+<li><strong>LATS</strong>（<a href="https://arxiv.org/abs/2310.04406">arXiv:2310.04406</a>）|<strong>RLEF</strong>（执行反馈 RL）|<strong>KernelBench</strong>（AI-as-a-Compiler 验证器）</li>
+</ul>
+
+<hr>
+
+<p><strong>下一课预告</strong>：规划与搜索——LATS 只是开始；长程任务的规划结构、搜索策略与探索-利用平衡（第 6 课核心）。</p>
+
+<div class="callout ask">
+<p><strong>喵！</strong>前三课 quiz 或作业还欠着（第 1 课 quiz、第 3 课作业②、第 4 课重答）——不急，第 5 课 quiz 做完一起对喵～</p>
+</div>
+
+</main>
+</body>
+</html>

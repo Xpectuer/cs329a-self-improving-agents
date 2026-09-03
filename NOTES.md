@@ -40,3 +40,11 @@
   `<script src="../assets/mathjax-config.js"></script>` + `<script id="MathJax-script" src="../assets/vendor/mathjax/tex-svg.js" async></script>`
 - **NOTE 卡片**用 `.callout.note`（蓝，`assets/shared.css` 已定义；与 `.callout.win`/`.callout.ask` 同构）：适合公式逐符号拆解、易混淆点警示。
 - 验证方式：改完公式后用浏览器打开对应 html，检查 `mjx-container` 存在且无裸 Unicode 残留（TreeWalker 遍历非 mjx 文本）。
+## 工作笔记（2026-09-01 追加 4）
+
+- **第 5 课已建**：`lessons/0005-tools-and-code-feedback.html`（工具调用→环境反馈；执行反馈/单元测试/AI-as-a-Compiler；RLEF 执行信号做 RL；Agent Search；LATS 六阶段将 MCTS 引入 LLM），配套 `reference/0006-tools-and-code-feedback.html`。
+- 第 5 课 quiz 答案分布：D/C/B/D/B（5 题）。L2 B/A/C/B/A → L3 B/C/A/A/B → L4 C/D/A/B/C → L5 D/A/C/B/D。
+- **技术约定**（见上「技术约定」区块）：公式一律 LaTeX+MathJax（vendor 本地化）；NOTE 卡 `.callout.note`；禁止 Unicode 冒充公式。第 5 课已含公式载体（LATS 评估合成分数）——首次把 MathJax 用到 lesson 正文，已验证渲染。
+- 用户跳过第 3 课作业、第 4 课 quiz 重答未报分——节奏提示已用；若第 5 课 quiz 完成后连续跳过两次，考虑在下一课开头加「先补前课」提示。
+- 第 5 课开始，速查卡/课程模板已全量接入 MathJax head（0002/0005 迁移，0006 新建）；后续课程照抄 `assets/mathjax-config.js` + `tex-svg.js` 双行。
+- **共享资源 insight 已入课**（2026-09-01）：用户问 LATS 在互斥设备环境的可行性 → 结论「环境可回放（可重置/无副作用）才是 LATS 地基假设，比可逆更强；原版未处理共享资源」。reference/0006 新增 §6.1（三问判别 + 三适配方向，锚点 lats-limits）；lesson 0005 §4 加 callout.note 指回。细节见 learning-records/0005 课后追加。

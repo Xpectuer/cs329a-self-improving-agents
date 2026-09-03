@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工具与代码反馈速查卡</title>
+<link rel="stylesheet" href="../assets/shared.css">
+<script src="../assets/mathjax-config.js"></script>
+<script id="MathJax-script" src="../assets/vendor/mathjax/tex-svg.js" async></script>
+</head>
+<body>
+<main>
+<h1>工具与代码反馈速查卡</h1>
+<p class="meta">第 5 课配套参考 · 「执行反馈」是把验证从判词变动作的关键</p>
+<p class="lead">一句话：模型不靠「想」改答案，靠「做」拿反馈——执行代码、跑测试、调用工具，用真实结果修正自己。</p>
+
+<h2>1. 工具调用：从生成器到智能体</h2>
+<p>LLM 只生成文本；<strong>带工具的 agent</strong> 能调用代码解释器、搜索引擎、API、模拟器，执行动作、读取环境结果、多步迭代。工具是「智能体」与「生成模型」之间的枢纽；符号技术也属于工具使用（且是合成数据来源之一）。</p>
+
+<h2>2. 反馈的类型与强度</h2>
+<table>
+<tr><th>类型</th><th>机制</th><th>例子</th><th>强度</th></tr>
+<tr><td>静态答案匹配</td><td>生成后单次比对</td><td>数学答案、选择题</td><td>判别式，无法指导中间步</td></tr>
+<tr><td><strong>执行反馈</strong></td><td>运行代码/测试，看真实结果</td><td>pytest、编译器、解释器</td><td>验证行为而非表面</td></tr>
+<tr><td>环境交互</td><td>工具调用返回观测</td><td>网页、search API、模拟器</td><td>动态、可多步</td></tr>
+</table>
+
+<h2>3. 可验证领域 = 执行反馈的天然土壤</h2>
+<table>
+<tr><th>领域</th><th>验证器</th><th>备注</th></tr>
+<tr><td>数学</td><td>形式化证明（Lean 等）</td><td>机械严谨，逐步校验</td></tr>
+<tr><td>编程</td><td><strong>单元测试</strong></td><td>写测试比写程序简单；RLEF 用执行反馈做 RL 信号</td></tr>
+<tr><td>语言转换</td><td>输入/输出等价性</td><td>AI-as-a-Compiler（PyTorch→CUDA）；KernelBench 上覆盖率随采样<strong>线性提升</strong></td></tr>
+</table>
+<p class="sidenote">验证器必须<strong>比生成任务更简单</strong>，才能大规模自动化——否则只是把难题换了个地方。</p>
+
+<h2>4. 代码反馈的两种用法</h2>
+<ul>
+<li><strong>筛选</strong>：跑测试 → 保留通过的候选（第 3 课 AlphaCode 流）</li>
+<li><strong>学习信号</strong>：执行结果作为奖励喂给 RL（<strong>RLEF</strong>）——把验证动作从「判别器」升级为「引导信号」</li>
+</ul>
+
+<h2>5. Agent Search：搜索空间从「代码」到「轨迹」</h2>
+<p>代码模型搜索 = 大量采样 + 筛选（AlphaCode/AlphaCode 2）；<strong>智能体搜索</strong> = 在深度研究式长任务中，于<strong>动作/轨迹空间</strong>搜索，算法示例 <strong>LATS</strong>。</p>
+
+<h2>6. LATS 六阶段（MCTS × LLM，测试时搜索）</h2>
+<ol>
+<li><strong>选择</strong>：UCT 平衡探索/利用，选扩展节点</li>
+<li><strong>扩展</strong>：采样多个候选行动，<strong>并行执行</strong>，观测追加上下文</li>
+<li><strong>评估</strong>：$s = s_{LM} + \lambda\, s_{SC}$（LLM-as-Judge 打分 + 自洽性频率分数）</li>
+<li><strong>模拟</strong>：从最高分状态贪心推进至终点/预算</li>
+<li><strong>反向传播</strong>：结果回传更新路径分数</li>
+<li><strong>反思</strong>：对成功/失败轨迹生成解释，回喂后续搜索</li>
+</ol>
+<p class="sidenote">HotPotQA / WebShop 无需微调即接近人类专家；提醒：隐含假设行动<strong>可逆</strong>，交易/支付等不可逆场景慎用；成本未系统分析。</p>
+<h3 id="lats-limits">6.1 LATS 的地基假设：环境可回放（共享资源问题）</h3>
+<p>树搜索从父状态分岔 = 执行 $a_1$ → 回到父状态 → 再执行 $a_2$……所以 LATS 真正依赖的不是「行动可逆」，而是<strong>环境可回放</strong>（可重置 / 无副作用）。模拟器、检索、沙箱都满足；真实物理资源（如互斥设备：一次只能操作一台）不满足——原版 LATS 未处理这类冲突，评测环境从不会遇到。</p>
+<table>
+<tr><th>适用性三问</th><th>回答「否」的后果</th></tr>
+<tr><td>① 环境可重置？（可回到任意历史状态重放）</td><td>树分岔在物理上不可能 → LATS 直接失效</td></tr>
+<tr><td>② 动作可逆？（错了能撤销）</td><td>探索被真实后果惩罚，只能一次性下注</td></tr>
+<tr><td>③ 副作用可观察？（冲突/占用能被环境反馈表达）</td><td>无信号可学——学了也白学</td></tr>
+</table>
+<p><strong>适配方向</strong>（工程思路，超出论文本身）：</p>
+<ul>
+<li><strong>环境可模拟</strong>（digital twin / 沙箱）→ 把「设备占用表」建模进状态，冲突动作返回负反馈——冲突观察也是执行反馈（见 §2），MCTS 自然学会避开</li>
+<li><strong>只读可搜索 + 物理不可逆</strong> → 分层执行：树只在决策/只读层跑，物理动作放搜索末端一次性执行</li>
+<li><strong>完全不可模拟/不可逆</strong> → 换世界模型规划（第 6 课的主题域）</li>
+</ul>
+<p class="sidenote">判别口诀：可回放 → 直接用；可模拟 → 建模进状态；只读层 → 分层执行；都不行 → 世界模型。</p>
+
+<h2>7. 与闭环四步的对接</h2>
+<p>「生成 → <strong>验证（执行反馈）</strong> → 学习（RLEF/RL） → 搜索（LATS）」——工具执行既是验证器，又是学习信号源，还是搜索的探针。这正是「通过搜索实现自我改进」的第 2 讲主线在工具层的落地。</p>
+
+<hr>
+<p class="sidenote">依据：<a href="../wiki/tool-calling.md">tool-calling</a>、<a href="../wiki/rlef.md">rlef</a>、<a href="../wiki/verifiable-domains.md">verifiable-domains</a>、<a href="../wiki/agent-search.md">agent-search</a>、<a href="../wiki/lats.md">lats</a>、<a href="../wiki/agentic-workflows.md">agentic-workflows</a>；LATS 论文（<a href="https://arxiv.org/abs/2310.04406">arXiv:2310.04406</a>）。</p>
+</main>
+</body>
+</html>
